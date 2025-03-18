@@ -1,12 +1,12 @@
-#include "globals.hpp"
-#include "packets.hpp"
+#include "c_globals.hpp"
+#include "c_packets.hpp"
 
-void readThread(int sockfd, Context* ctx) {
+void readThread(int sockfd, const Config* ctx) {
     struct sockaddr_in clientAddr;
     socklen_t addrLen = sizeof(clientAddr);
     fd_set read_fds;
     struct timeval timeout;
-    int last_ack_blk = ctx->current_blk;
+    int last_ack_blk = current_blk;
 
     while (true) {
         FD_ZERO(&read_fds);
@@ -21,24 +21,22 @@ void readThread(int sockfd, Context* ctx) {
         if (activity > 0) { 
             unsigned char ack_buf[4];
             int recv_len = recvfrom(sockfd, ack_buf, sizeof(ack_buf), 0, (struct sockaddr*)&clientAddr, &addrLen);
-
+            // std::cout<<"Recv Something\n";
             if (recv_len > 0) {
                 ACK_Packet ack = extract_ack_packet(ack_buf);
                 std::cout<<"ACK recv with blk num = "<<ack.block_number<<"\n";
                 std::lock_guard<std::mutex> lock(mtx);
-                ctx->current_blk = ack.block_number; // Update current block
-                last_ack_blk = ctx->current_blk;
+                current_blk = ack.block_number; // Update current block
+                last_ack_blk = current_blk;
                 flag_Ack_Recv= true; // technically means current_blk updated
-                std::this_thread::sleep_for(std::chrono::milliseconds(500));
             }
         } 
         // Timeout case for ACK
         else if (activity == 0) {
             std::cout<<"Timeout For ACK\n"; 
             std::lock_guard<std::mutex> lock(mtx);
-            ctx->current_blk = last_ack_blk; // Retransmit from last ACKed block
+            current_blk = last_ack_blk; // Retransmit from last ACKed block
             flag_Ack_Recv= true;
-            std::this_thread::sleep_for(std::chrono::milliseconds(500));
         }
     }
 }

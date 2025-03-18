@@ -1,12 +1,11 @@
 #include "globals.hpp"
 
-void readThread(int sockfd, Context* ctx,bool flag_Ack_Recv);
-void forwardThread(int sockfd, Context* ctx,bool flag_Ack_Recv);
+void readThread(int sockfd, Context* ctx);
+void forwardThread(int sockfd, Context* ctx);
 
 void serverAsWriter(int sockfd, Context* ctx) {
-    bool flag_Ack_Recv = false;
-    std::thread readThreadInstance(readThread, sockfd, ctx , flag_Ack_Recv);
-    std::thread forwardThreadInstance(forwardThread, sockfd, ctx, flag_Ack_Recv);
+    std::thread readThreadInstance(readThread, sockfd, ctx );
+    std::thread forwardThreadInstance(forwardThread, sockfd, ctx);
 
     readThreadInstance.join();
     forwardThreadInstance.join();

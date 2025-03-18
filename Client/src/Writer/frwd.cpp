@@ -1,5 +1,5 @@
-#include "globals.hpp"
-#include "packets.hpp"
+#include "c_globals.hpp"
+#include "c_packets.hpp"
 
 std::pair<unsigned char*,size_t> readFileBlock(const std::string& fileName, int block_num, const std::string& mode) {
     // Determine the file opening mode based on the input "mode"
@@ -55,54 +55,54 @@ std::pair<unsigned char*,size_t> readFileBlock(const std::string& fileName, int 
 }
 
 
-void forwardThread(int sockfd, Context* ctx) {
+void forwardThread(int sockfd, const Config* ctx){
     struct sockaddr_in clientAddr;
     clientAddr.sin_family = AF_INET;
-    clientAddr.sin_port = htons(ctx->clientPort);
-    inet_pton(AF_INET, ctx->clientIp, &clientAddr.sin_addr);
+    clientAddr.sin_port = htons(ctx->serverPort);
+    inet_pton(AF_INET, ctx->serverIp.c_str(), &clientAddr.sin_addr);
     int limit;
 
     while(true){
 
       mtx.lock();
-      limit = ctx->current_blk + ctx->WindowSize -1;
+      limit = current_blk + ctx->serverWindowSize -1;
       mtx.unlock();
 
     Windowloop:   
         mtx.lock();
-        auto blk = readFileBlock(ctx->fileName, ctx->current_blk , "octet");
+        auto blk = readFileBlock(ctx->filePath, current_blk , "octet");
         if(blk.second ==0){// Out of Bound File Access
             std::cout<<"File Transfer Complete \n";
             mtx.unlock();
             break;
         }
-        std::cout<<"Building Data Packet for blk = "<<ctx->current_blk<<"\n";
-        u_char * packet = build_data_packet(ctx->current_blk,blk.first,blk.second);
+        std::cout<<"Building Data Packet for blk = "<<current_blk<<"\n";
+        u_char * packet = build_data_packet(current_blk,blk.first,blk.second);
         sendto(sockfd, packet, blk.second + 4, 0, (struct sockaddr*)&clientAddr, sizeof(clientAddr));
-        ctx->current_blk ++;
+        current_blk ++;
 
-        if(ctx->current_blk <= limit){
+        if(current_blk <= limit){
             mtx.unlock();
-            std::this_thread::sleep_for(std::chrono::milliseconds(50)); // In the meanTime Wait if RecvThread Timeouts or Recv New ACK
+             std::this_thread::sleep_for(std::chrono::milliseconds(500)); // In the meanTime Wait if RecvThread Timeouts or Recv New ACK
 
             mtx.lock();
             if(flag_Ack_Recv){
-                std::cout<<"Updated [After recv ACK ]current_blk = "<<ctx->current_blk<<"\n";
+                std::cout<<"Updated [After recv ACK ]current_blk = "<<current_blk<<"\n";
                 flag_Ack_Recv = false;
-                limit = ctx->current_blk + ctx->WindowSize -1; // New Limit [current_blk is updated in ReadThread]
+                limit = current_blk + ctx->serverWindowSize -1; // New Limit [current_blk is updated in ReadThread]
             }
             mtx.unlock();
 
             goto Windowloop;
         }
         mtx.unlock(); // Finished Transmitting Entire Window
-
+        
         //Before Going to Next Window Wait For ACK recv / Ack Timeout
         ack_loop:
         mtx.lock();
         if(flag_Ack_Recv != true){
             mtx.unlock();
-            std::this_thread::sleep_for(std::chrono::milliseconds(50));
+            std::this_thread::sleep_for(std::chrono::milliseconds(500));
             goto ack_loop;
         }
         flag_Ack_Recv = false;

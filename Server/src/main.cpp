@@ -120,20 +120,34 @@ int main(int argc, char **argv){
 		strncpy(ctx->fileName, pkt.filename, sizeof(ctx->fileName) - 1);
 		ctx->fileName[sizeof(ctx->fileName) - 1] = '\0';  // Ensure null termination
 
-		if(buffer[1]==1){ // Read Packet recv
-			serverAsWriter(sockfd,ctx);
+		std::cout << "Client IP: " << ctx->clientIp << std::endl;
+		std::cout << "Client Port: " << ctx->clientPort << std::endl;
+		std::cout << "Server Window Size: " << ctx->WindowSize << std::endl;
+		std::cout << "Current_blk: " << ctx->current_blk << std::endl;
+		std::cout << "File Path To Be Read/Written: " << ctx->fileName << std::endl;
+
+		if(buffer[1]==1){ // Read Packet recv			
 			ctx->choice='R';
+			std::cout<<"Recv Read RQ\n";
+			serverAsWriter(sockfd,ctx);
 		}
-		else{ // Write Packet recv
-			serverAsReader(sockfd,ctx);
+		else{ // Write Packet recv			
 			ctx->choice='W';
+			std::cout<<"Recv Write RQ\n";
+			serverAsReader(sockfd,ctx);
 		}
 	}
 	else{// This process is a Backup
-		if(ctx->choice == 'R')
+		if(ctx->choice == 'R'){
+			std::cout<<"Continuing Read RQ\n";
 			serverAsWriter(sockfd,ctx);
-		else
+		}
+			
+		else{
+			std::cout<<"Continuing Write RQ\n";
 			serverAsReader(sockfd,ctx);
+		}
+			
 	}
 
 	

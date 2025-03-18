@@ -19,7 +19,7 @@ void writeFileBlock(const std::string& fileName,std::string data , int data_size
 
 }
 
-#define TIMEOUT_SEC 2
+
 
 void clientAsReader(const Config& config) {
 
@@ -39,12 +39,12 @@ void clientAsReader(const Config& config) {
     fd_set readfds; // for async Read[Non Block IO]
     struct timeval timeout;
 
-    // Send RD packet and Wait For Data Packet[blk =1] As Reply
+    // Send RD packet and Wait For Data Packet[blk =0] As Reply
     unsigned char* rrq_packet = build_rrq_wrq_packet(config.filePath.c_str(), config.serverWindowSize, 1);
     while (true) {
         //Send Read Request
         std::cout<<"Send RD packet\n";        
-        sendto(sockfd, rrq_packet, strlen(config.filePath.c_str()) + 4, 0, (struct sockaddr*)&serverAddr, sizeof(serverAddr));
+        sendto(sockfd, rrq_packet, strlen(config.filePath.c_str()) + 5, 0, (struct sockaddr*)&serverAddr, sizeof(serverAddr));
         //setup for timeout
         FD_ZERO(&readfds);
         FD_SET(sockfd, &readfds);

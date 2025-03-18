@@ -42,3 +42,4 @@ inline void check_err(int fd,std::string mssg){
 }
 
 inline std::mutex mtx;  // Mutex for synchronizing access to current_blk
+inline bool flag_Ack_Recv = false;

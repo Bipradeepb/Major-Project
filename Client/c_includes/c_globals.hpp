@@ -30,6 +30,7 @@ struct Config {
     std::string filePath;
 };
 
+inline std::mutex mtx;
 
 /////////////////////////////// Helper Functions ////////////////////
 
@@ -39,3 +40,7 @@ inline void check_err(int fd,std::string mssg){
 		exit(1);
 	}	
 }
+
+#define TIMEOUT_SEC 2
+inline  bool flag_Ack_Recv = false;
+inline  int current_blk = 0;
