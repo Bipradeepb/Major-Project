@@ -1,6 +1,7 @@
 
 // how to use -->prithi@HP$./server.out <ServerPort>
 #include "globals.hpp"
+#include "packets.hpp"
 
 /*
 
@@ -32,59 +33,10 @@ Note2:  a.A WRQ is acknowledged with an ACK packet having a block number of zero
 
 */
 
-std::pair<unsigned char*,size_t> readFileBlock(const std::string& fileName, int block_num, const std::string& mode) {
-    // Determine the file opening mode based on the input "mode"
-    const char* fileMode = (mode == "octet") ? "rb" : "r";  // "rb" for binary, "r" for text
+void serverAsWriter(int sockfd,Context *ctx);
+void serverAsReader(int sockfd,Context *ctx);
 
-    // Open the file in the specified mode
-    FILE* file = fopen(fileName.c_str(), fileMode);
-    if (!file) {
-        std::cerr << "Error opening file: " << fileName << std::endl;
-        return {nullptr,0};
-    }
-
-    //std::cout<<"File size is "<<ftell(file) << " fileMode "<<fileMode<<" fileName = "<< fileName.c_str()<<"\n";
-    
-    // Calculate the offset and seek to that position in the file
-    long offset = block_num * 512;
-    if (fseek(file, offset, SEEK_SET) != 0) {
-        std::cerr << "Error seeking in file." << std::endl;
-        fclose(file);
-        return {nullptr,0};
-    }
-
-    // Check if the file pointer is beyond the end of the file
-    long currentPos = ftell(file);
-    fseek(file, 0, SEEK_END);  // Go to the end of the file to find its length
-    long fileSize = ftell(file);
-
-    if (currentPos >= fileSize) {
-        std::cerr<<"currentPos = "<<currentPos<<" file Size = "<<fileSize<<"\n";
-        std::cerr << "Attempted to read beyond the end of file." << std::endl;
-        std::cerr << "fileName = "<<fileName <<" block_num = "<<block_num<<" mode = "<<mode<<std::endl;
-        fclose(file);
-        return {nullptr,0};
-    }
-
-    // Go back to the original position after checking file size
-    fseek(file, currentPos, SEEK_SET);
-    
-    // Allocate memory for reading 512 bytes
-    unsigned char* buffer = new unsigned char[512];
-    std::memset(buffer, 0, 512);  // Initialize buffer with 0
-
-    // Read 512 bytes into buffer
-    size_t bytesRead = fread(buffer, sizeof(unsigned char), 512, file);
-    if (bytesRead != 512) {
-        std::cerr << "Warning: Could not read full 512 bytes, read " << bytesRead << " bytes." << std::endl;
-    }
-
-    // Close the file
-    fclose(file);
-
-    return {buffer,bytesRead};
-}
-
+const char* SHARED_MEM_NAME = "/context_shared_mem"; // Shared memory secret key
 
 int main(int argc, char **argv){
 
@@ -95,6 +47,7 @@ int main(int argc, char **argv){
 	}
 	
 	//creating the socket
+	std::cout<<"Socket Setup\n";
 	int sockfd= socket(AF_INET,SOCK_DGRAM,0);
 	check_err(sockfd,"Error in opening UDP socket");
 	
@@ -109,11 +62,79 @@ int main(int argc, char **argv){
 	int status= bind(sockfd,(struct sockaddr *) &sa, sizeof(sa));
 	check_err(status,"Error in binding");
 	
-	//optional messages
-	printf("\nSetup Finished Sarting 3 threads ...\n\n");
-			
+	//////////////////////////////////// Setting UP Context for ACTIVE / BACKUP /////////////////
+    int shm_fd;
+    bool is_new = false;
 
+    // Try opening existing shared memory
+    shm_fd = shm_open(SHARED_MEM_NAME, O_RDWR, 0666);
+    if (shm_fd == -1) {
+        // If it doesn't exist, create it
+        shm_fd = shm_open(SHARED_MEM_NAME, O_CREAT | O_RDWR, 0666);
+        if (shm_fd == -1) {
+            perror("shm_open failed");
+            return 1;
+        }
+        is_new = true;
+        std::cout << "Created new shared memory.\n";
+    } else {
+        std::cout << "Using existing shared memory.\n";
+    }
 
+    // Resize only if it's newly created
+    if (is_new && ftruncate(shm_fd, sizeof(Context)) == -1) {
+        perror("ftruncate failed");
+        return 1;
+    }
+
+    // Map shared memory to process address space
+    Context* ctx = (Context*)mmap(0, sizeof(Context), PROT_READ | PROT_WRITE, MAP_SHARED, shm_fd, 0);
+    if (ctx == MAP_FAILED) {
+        perror("mmap failed");
+        return 1;
+    }
+
+    // If new, initialize memory and Fill up Context For 1st Time
+    if (is_new) {
+        memset(ctx, 0, sizeof(Context));
+    
+		/////////////////////////////////// SyncIng With Client //////////////////		
+		struct sockaddr_in clientaddr{};
+		socklen_t addr_len = sizeof(clientaddr);
+
+		u_char buffer[BUFFER_SIZE]={0};
+
+		// Receive RD/WR packet
+		std::cout<<"Waiting For RD/WR of Client\n";
+		ssize_t recv_len = recvfrom(sockfd, buffer, BUFFER_SIZE, 0, (struct sockaddr*)&clientaddr, &addr_len);
+		check_err(recv_len,"RD/WR recv failed");
+
+		// Extract RRQ/WRQ data
+		RRQ_WRQ_Packet pkt = extract_rrq_wrq_packet(buffer);
+
+		// Fill shared memory Context ctx
+		inet_ntop(AF_INET, &clientaddr.sin_addr, ctx->clientIp, sizeof(ctx->clientIp));
+		ctx->clientPort = ntohs(clientaddr.sin_port);
+		ctx->WindowSize = pkt.WinSize;
+		ctx->current_blk = pkt.block_number;
+		strncpy(ctx->fileName, pkt.filename, sizeof(ctx->fileName) - 1);
+		ctx->fileName[sizeof(ctx->fileName) - 1] = '\0';  // Ensure null termination
+
+		if(buffer[1]==1){ // Read Packet recv
+			serverAsWriter(sockfd,ctx);
+			ctx->choice='R';
+		}
+		else{ // Write Packet recv
+			serverAsReader(sockfd,ctx);
+			ctx->choice='W';
+		}
+	}
+	else{// This process is a Backup
+		if(ctx->choice == 'R')
+			serverAsWriter(sockfd,ctx);
+		else
+			serverAsReader(sockfd,ctx);
+	}
 
 	
 	return 0;

@@ -1,6 +1,6 @@
 #pragma once //prevent multiple inclusion of same header in a single translation unit
 
-#include "globals.hpp"
+#include "c_globals.hpp"
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 //read_write packet

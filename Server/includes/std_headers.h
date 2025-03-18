@@ -11,6 +11,9 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <fcntl.h>      // For O_* constants
+#include <sys/mman.h>   // For shm_open, mmap
+#include <sys/stat.h>   // For mode constants
 
 // cpp
 #include <bits/stdc++.h> 

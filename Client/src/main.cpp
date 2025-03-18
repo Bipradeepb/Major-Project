@@ -76,7 +76,7 @@ int main(int argc, char* argv[]) {
 		clientAsWriter(config);
 	}	
 	else{
-		printf("Wrong choice of %s \n",config.choice);
+		printf("Wrong choice of %d \n",config.choice);
 		return 0;
 	}
  		

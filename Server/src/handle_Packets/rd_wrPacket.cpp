@@ -1,4 +1,4 @@
-#include "c_globals.hpp"
+#include "globals.hpp"
 // Function to build & extract RRQ/WRQ packet
 /*
           2 bytes    string   1 byte     2 byte       

@@ -21,13 +21,14 @@ public:
     int block_number;
 } ;
 
-/////////////////////// Stores Info of Config File of Client
-struct Config {
-    std::string serverIp;
-    int serverPort;
-    int serverWindowSize;
-    char choice;
-    std::string filePath;
+/////////////////////// Stores Context in Shared Memory for Active/Backup
+struct Context {
+    char clientIp[16];  // IPv4 Address (e.g., "192.168.1.1")
+    int clientPort;
+    int WindowSize;
+    int current_blk;
+    char fileName[256]; // Filename (Assuming max 256 chars)
+    char choice; // R if client wants to Read else W for Write
 };
 
 
@@ -39,3 +40,5 @@ inline void check_err(int fd,std::string mssg){
 		exit(1);
 	}	
 }
+
+inline std::mutex mtx;  // Mutex for synchronizing access to current_blk

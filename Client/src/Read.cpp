@@ -21,7 +21,7 @@ void writeFileBlock(const std::string& fileName,std::string data , int data_size
 
 #define TIMEOUT_SEC 2
 
-void clientAsReader(Config& config) {
+void clientAsReader(const Config& config) {
 
     // Setup UDP Socket
     int sockfd = socket(AF_INET, SOCK_DGRAM, 0);
@@ -108,8 +108,16 @@ void clientAsReader(Config& config) {
                 expect_blk_num++;
                 curr_Win--;
             }
+            else{//data_pkt.block_number > expect_blk_num  or data_pkt.block_number < expect_blk_num
+                std::cout<<"Sending ACK with blk = "<<expect_blk_num<<"\n";
+                unsigned char* ack_packet = build_ack_packet(expect_blk_num);
+                sendto(sockfd, ack_packet, 4, 0, (struct sockaddr*)&serverAddr, sizeof(serverAddr));
+                free(ack_packet);
+                curr_Win = config.serverWindowSize;                
+            }
             
-            if(curr_Win == 0 or data_pkt.block_number > expect_blk_num  or data_pkt.block_number< expect_blk_num){
+            if(curr_Win == 0){
+                std::cout<<"Full Win Recv :- Sending ACK with blk = "<<expect_blk_num<<"\n";
                 unsigned char* ack_packet = build_ack_packet(expect_blk_num);
                 sendto(sockfd, ack_packet, 4, 0, (struct sockaddr*)&serverAddr, sizeof(serverAddr));
                 free(ack_packet);
@@ -121,6 +129,32 @@ void clientAsReader(Config& config) {
                 
     }// end of inf loop
 
+    //Handle Last Packet Recv:-
+     while (true) {
+        //Send Final ACK
+        std::cout<<"Sending FInal ACK with blk = "<<expect_blk_num<<"\n";
+        unsigned char* ack_packet = build_ack_packet(expect_blk_num);
+        sendto(sockfd, ack_packet, 4, 0, (struct sockaddr*)&serverAddr, sizeof(serverAddr));
+        free(ack_packet);
+        
+        //setup for timeout
+        FD_ZERO(&readfds);
+        FD_SET(sockfd, &readfds);
+        timeout.tv_sec = TIMEOUT_SEC;
+        timeout.tv_usec = 0;
+        
+        int activity = select(sockfd + 1, &readfds, nullptr, nullptr, &timeout);   
+
+        if(activity == 0){// Timeout ==> Great We Can Finally END
+            break;
+        }
+        else if(activity >0){ // Sent Final ACK lost ==> Server Resend Data Packet
+            recvfrom(sockfd, buffer, BUFFER_SIZE, 0, (struct sockaddr*)&recvAddr, &recvAddrLen);
+            //discard this buffer
+            continue;  
+        }
+    }
+    
     std::cout<< "Received Full File \n";  
     close(sockfd);
 }

@@ -1,6 +1,6 @@
 # Compiler and flags
 CXX := g++
-CXXFLAGS := -Wall -Iinclude        # Basic flags with include path
+CXXFLAGS := -Wall -Iincludes        # Basic flags with include path
 BUILD_DIR := build
 SRC_DIR := src
 TARGET := $(BUILD_DIR)/server_exe
