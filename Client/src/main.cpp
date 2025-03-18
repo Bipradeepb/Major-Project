@@ -1,96 +1,87 @@
 
-// how to use -->prithi@HP$./server.out <ServerPort>
-#include "globals.hpp"
-
-/*
-
-Order of Headers
-
-    2 bytes [Application layer Protocol]
-    ----------------------------------------------------------
-   |  Local Medium  |  Internet  |  Datagram  |  TFTP Opcode  |
-    ----------------------------------------------------------
-
-std-TFTP Formats
-
-   Type   Op #     Format without header
-
-          2 bytes    string   1 byte     string   1 byte
-          -----------------------------------------------
-   RRQ/  | 01/02 |  Filename  |   0  |    Mode    |   0  |
-   WRQ    -----------------------------------------------
-          2 bytes    2 bytes       n bytes
-          ---------------------------------
-   DATA  | 03    |   Block #  |    Data    |
-          ---------------------------------
-          2 bytes    2 bytes
-          -------------------
-   ACK   | 04    |   Block #  |
-          --------------------
-          2 bytes  2 bytes        string    1 byte
-          ----------------------------------------
-   ERROR | 05    |  ErrorCode |   ErrMsg   |   0  |
-   	  ----------------------------------------
-
-Note1:    The data field is from zero to 512 bytes long.  If it is 512 bytes
-   	  long, the block is not the last block of data; if it is from zero to
-   	  511 bytes long, it signals the end of the transfer.
-   
-Note2:  a.A WRQ is acknowledged with an ACK packet having a block number of zero.
-	b.The WRQ and DATA packets are acknowledged by ACK or ERROR packets
-	c.The RRQ and ACK packets are acknowledged by  DATA  or ERROR packets.
-	d. All  packets other than duplicate ACK's and those used for termination are acknowledged unless a timeout occurs	
-
-Note3:  The packets sent from this server is prepended by client_id| 1b \0 |std-tftp packet
-		The packets recv by this server is prepended by client_id | 1b\0 | fileName | \0 | std-tftp packet
-
+// how to use -->prithi@HP$ ./cli <conFigFilePath>
+/* Config File Has the following Info [each in new Line]
+Server Ip eg 10.2.10.255
+Server Port eg 9999
+ServerWindowSize eg 5
+Choice eg R or W
+FilePath .
 */
+#include "c_globals.hpp"
 
-void reader_thread(int sockfd);
-void frwd_thread(int sockfd);
-void timer_thread();
+void clientAsReader(const Config& config);
+void clientAsWriter(const Config& config);
 
+bool readConfigFile(const std::string& fileName, Config& config) {
+    std::ifstream file(fileName);
+    if (!file) {
+        std::cerr << "Error: Unable to open config file: " << fileName << std::endl;
+        return false;
+    }
 
-int main(int argc, char **argv){
+    std::string line;
+    int lineNumber = 0;
+    while (std::getline(file, line)) {
+        lineNumber++;
+        std::istringstream iss(line);
+        switch (lineNumber) {
+            case 1: config.serverIp = line; break;
+            case 2: config.serverPort = std::stoi(line); break;
+            case 3: config.serverWindowSize = std::stoi(line); break;
+            case 4: 
+                if (line.size() == 1 && (line[0] == 'R' || line[0] == 'W')) {
+                    config.choice = line[0];
+                } else {
+                    std::cerr << "Error: Invalid choice value in config file" << std::endl;
+                    return false;
+                }
+                break;
+            case 5: config.filePath = line; break;
+            default: break;
+        }
+    }
 
-	// checking command line args
-	if (argc <2){
-		printf("Enter format :- ./build/server_exe <server_Port>\n");
-		std::cout<<"Suggestion:- Give 9000s port to Layer-3(Tftp servers) \n Give 8000s port to Layer-2(LoadBalencers) \nGive 7000s port to Layer-1(sw_emulator)\n";
-		exit(1);
-	}
-	
-	//creating the socket
-	int sockfd= socket(AF_INET,SOCK_DGRAM,0);
-	check_err(sockfd,"Error in opening UDP socket");
-	
-	// setting server details
-	struct sockaddr_in sa;
-	bzero(&sa,sizeof(sa));
-	sa.sin_family = AF_INET;//setting address family to IPv4
-	sa.sin_port = htons(atoi(argv[1]));
-	sa.sin_addr.s_addr=INADDR_ANY;
-	
-	// binding
-	int status= bind(sockfd,(struct sockaddr *) &sa, sizeof(sa));
-	check_err(status,"Error in binding");
-	
-	//optional messages
-	printf("\nSetup Finished Sarting 3 threads ...\n\n");
-			
-	std::thread reader(reader_thread,sockfd);
-	std::thread frwd(frwd_thread,sockfd);
-	std::thread timer(timer_thread);
-
-	reader.join();
-	frwd.join();
-	timer.join();
-
-	
-	return 0;
+    if (lineNumber < 5) {
+        std::cerr << "Error: Config file missing required values" << std::endl;
+        return false;
+    }
+    return true;
 }
 
+int main(int argc, char* argv[]) {
+    if (argc != 2) {
+        std::cerr << "Usage: " << argv[0] << " <config_file>" << std::endl;
+        return 1;
+    }
 
+    Config config;
+    if (!readConfigFile(argv[1], config)) {
+        return 1;
+    }
+
+    std::cout << "Server IP: " << config.serverIp << std::endl;
+    std::cout << "Server Port: " << config.serverPort << std::endl;
+    std::cout << "Server Window Size: " << config.serverWindowSize << std::endl;
+    std::cout << "Choice: " << config.choice << std::endl;
+    std::cout << "File Path To Be Read/Written: " << config.filePath << std::endl;
+	
+///////////////////////////////////////////////////////////////////////////////////////////////////
+	
+	// User Menu
+	
+	if(config.choice == 'R'){
+		clientAsReader(config);
+	}
+	else if(config.choice == 'W') {
+		clientAsWriter(config);
+	}	
+	else{
+		printf("Wrong choice of %s \n",config.choice);
+		return 0;
+	}
+ 		
+	return 0;
+}
 
 
 

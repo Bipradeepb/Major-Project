@@ -4,21 +4,14 @@
 
 /*
 
-Order of Headers
-
-    2 bytes [Application layer Protocol]
-    ----------------------------------------------------------
-   |  Local Medium  |  Internet  |  Datagram  |  TFTP Opcode  |
-    ----------------------------------------------------------
-
-std-TFTP Formats
+Header Formats
 
    Type   Op #     Format without header
 
-          2 bytes    string   1 byte     string   1 byte
-          -----------------------------------------------
-   RRQ/  | 01/02 |  Filename  |   0  |    Mode    |   0  |
-   WRQ    -----------------------------------------------
+          2 bytes    string   1 byte    2 byte
+          ------------------------------------------
+   RRQ/  | 01/02 |  Filename  |   0  |  WindowSize |
+   WRQ    ------------------------------------------
           2 bytes    2 bytes       n bytes
           ---------------------------------
    DATA  | 03    |   Block #  |    Data    |
@@ -27,10 +20,6 @@ std-TFTP Formats
           -------------------
    ACK   | 04    |   Block #  |
           --------------------
-          2 bytes  2 bytes        string    1 byte
-          ----------------------------------------
-   ERROR | 05    |  ErrorCode |   ErrMsg   |   0  |
-   	  ----------------------------------------
 
 Note1:    The data field is from zero to 512 bytes long.  If it is 512 bytes
    	  long, the block is not the last block of data; if it is from zero to
@@ -41,22 +30,67 @@ Note2:  a.A WRQ is acknowledged with an ACK packet having a block number of zero
 	c.The RRQ and ACK packets are acknowledged by  DATA  or ERROR packets.
 	d. All  packets other than duplicate ACK's and those used for termination are acknowledged unless a timeout occurs	
 
-Note3:  The packets sent from this server is prepended by client_id| 1b \0 |std-tftp packet
-		The packets recv by this server is prepended by client_id | 1b\0 | fileName | \0 | std-tftp packet
-
 */
 
-void reader_thread(int sockfd);
-void frwd_thread(int sockfd);
-void timer_thread();
+std::pair<unsigned char*,size_t> readFileBlock(const std::string& fileName, int block_num, const std::string& mode) {
+    // Determine the file opening mode based on the input "mode"
+    const char* fileMode = (mode == "octet") ? "rb" : "r";  // "rb" for binary, "r" for text
+
+    // Open the file in the specified mode
+    FILE* file = fopen(fileName.c_str(), fileMode);
+    if (!file) {
+        std::cerr << "Error opening file: " << fileName << std::endl;
+        return {nullptr,0};
+    }
+
+    //std::cout<<"File size is "<<ftell(file) << " fileMode "<<fileMode<<" fileName = "<< fileName.c_str()<<"\n";
+    
+    // Calculate the offset and seek to that position in the file
+    long offset = block_num * 512;
+    if (fseek(file, offset, SEEK_SET) != 0) {
+        std::cerr << "Error seeking in file." << std::endl;
+        fclose(file);
+        return {nullptr,0};
+    }
+
+    // Check if the file pointer is beyond the end of the file
+    long currentPos = ftell(file);
+    fseek(file, 0, SEEK_END);  // Go to the end of the file to find its length
+    long fileSize = ftell(file);
+
+    if (currentPos >= fileSize) {
+        std::cerr<<"currentPos = "<<currentPos<<" file Size = "<<fileSize<<"\n";
+        std::cerr << "Attempted to read beyond the end of file." << std::endl;
+        std::cerr << "fileName = "<<fileName <<" block_num = "<<block_num<<" mode = "<<mode<<std::endl;
+        fclose(file);
+        return {nullptr,0};
+    }
+
+    // Go back to the original position after checking file size
+    fseek(file, currentPos, SEEK_SET);
+    
+    // Allocate memory for reading 512 bytes
+    unsigned char* buffer = new unsigned char[512];
+    std::memset(buffer, 0, 512);  // Initialize buffer with 0
+
+    // Read 512 bytes into buffer
+    size_t bytesRead = fread(buffer, sizeof(unsigned char), 512, file);
+    if (bytesRead != 512) {
+        std::cerr << "Warning: Could not read full 512 bytes, read " << bytesRead << " bytes." << std::endl;
+    }
+
+    // Close the file
+    fclose(file);
+
+    return {buffer,bytesRead};
+}
 
 
 int main(int argc, char **argv){
 
 	// checking command line args
 	if (argc <2){
-		printf("Enter format :- ./build/server_exe <server_Port>\n");
-		std::cout<<"Suggestion:- Give 9000s port to Layer-3(Tftp servers) \n Give 8000s port to Layer-2(LoadBalencers) \nGive 7000s port to Layer-1(sw_emulator)\n";
+		printf("Enter Format: ./server_exe <ServerPort>\n");
 		exit(1);
 	}
 	
@@ -78,13 +112,8 @@ int main(int argc, char **argv){
 	//optional messages
 	printf("\nSetup Finished Sarting 3 threads ...\n\n");
 			
-	std::thread reader(reader_thread,sockfd);
-	std::thread frwd(frwd_thread,sockfd);
-	std::thread timer(timer_thread);
 
-	reader.join();
-	frwd.join();
-	timer.join();
+
 
 	
 	return 0;
