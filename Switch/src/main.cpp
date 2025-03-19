@@ -35,12 +35,13 @@ void load_configuration(const std::string& fileName) {
     file.close();
 }
 
+#define SEM_NAME "/my_binary_semaphore"
+
 int main(int argc, char **argv){
 
 	// checking command line args
 	if (argc <2){
 		printf("Enter format :- ./build/sw_exe <sw_Port> <configFilePath>\n");
-		std::cout<<"Suggestion:- Give 9000s port to Layer-3(Tftp servers) \n Give 8000s port to Layer-2(LoadBalencers) \nGive 7000s port to Layer-1(sw_emulator)\n";
 		std::cout<<"Config File Format :\n The first line contains threshold (an integer).\nThe second line contains the active LB(Ip_Port).\nThe third line contains the backup LB(Ip_Port).\n";
 		exit(1);
 	}
@@ -65,6 +66,18 @@ int main(int argc, char **argv){
 	
 	//optional messages
 	printf("\nSetup Finished Sarting 2 threads ...\n\n");
+
+	//Create Semaphore and Init to 0 if NOt exist else Use Existing
+	sem = sem_open(SEM_NAME, O_CREAT | O_EXCL, 0666, 0);
+    if (sem == SEM_FAILED) {
+        if (errno == EEXIST) {
+            // Semaphore already exists, just open it
+            sem = sem_open(SEM_NAME, 0);
+        } else {
+            perror("sem_open failed");
+            return 1;
+        }
+    }
 
     //create thread	
 	std::thread reader(reader_thread,sockfd);

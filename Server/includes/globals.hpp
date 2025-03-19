@@ -29,6 +29,7 @@ struct Context {
     int current_blk;
     char fileName[256]; // Filename (Assuming max 256 chars)
     char choice; // R if client wants to Read else W for Write
+    int curr_Win; // Used only in Reader [Denotes Num of Blks Left before ACK]
 };
 
 

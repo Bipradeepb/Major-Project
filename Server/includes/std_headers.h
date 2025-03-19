@@ -14,6 +14,7 @@
 #include <fcntl.h>      // For O_* constants
 #include <sys/mman.h>   // For shm_open, mmap
 #include <sys/stat.h>   // For mode constants
+#include <semaphore.h>
 
 // cpp
 #include <bits/stdc++.h> 

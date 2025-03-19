@@ -18,7 +18,7 @@ void frwd_thread(int sockfd){
 
         //debug lines
         std::cout<<"Inside Frwd Thread After Extract Job\n";
-        thejob.display_job();
+        //thejob.display_job();
 
         // Parse the IP and port from the client key
         size_t pos = thejob.destn.find('_');
@@ -42,15 +42,11 @@ void frwd_thread(int sockfd){
         if(thejob.destn_type == 'S'){
             
             //std::cout<< " Try to Aquire context lock\n";
-            mtx_context.lock();
-            //std::cout<< " Aquired context lock\n";
-            int client_num = client_context.size();
-            mtx_context.unlock();
 
             mtx_wd.lock();
-            std::cout<<"Checking For Switch wdCnt = "<<watchDogCnt<<" cli_num = "<<client_num<<"\n";
+            std::cout<<"Checking For Switch wdCnt = "<<watchDogCnt<<"\n";
             watchDogCnt++;// means server is still on if > threshold ==> server off
-            if((int)(watchDogCnt / client_num) > threshold){
+            if((watchDogCnt) > threshold){
                 switchFlag = true;
                 watchDogCnt =0; // once switch reset counter for new server
                 std::cout<<"SWITCH OCCURS\n";
@@ -78,7 +74,8 @@ void frwd_thread(int sockfd){
                 }
 
             }
-
+            std::cout<<"Signal Backup\n";
+            sem_post(sem);  // Signal the consumer[BackUp seerver]
         }
 
     }

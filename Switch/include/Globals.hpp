@@ -30,8 +30,6 @@ public:
 
 ///////////////////////////////////////////// DS and variables //////////////////////
 
-// key/client_id = IP + Port | Value = (fileName)
-inline std::unordered_map<std::string , std::string> client_context;
 inline int threshold;//Max Number of retransmission allowed beyond which server is declare dead
 
 inline int watchDogCnt{0}; // measure of how many packets are sent to server and havent recv any reply
@@ -41,9 +39,10 @@ inline std::list<job> WorkQ;
 //treat server_list[0] is active server
 inline std::string server_list[2];//List of Load_Balancer
 
-inline std::mutex mtx_WorkQ , mtx_context , mtx_ServerList , mtx_wd;      
+inline std::mutex mtx_WorkQ, mtx_ServerList , mtx_wd;      
 inline std::condition_variable cv_work;// Condition variable to notify tfrwd thread
 
+inline  sem_t* sem;
 /////////////////////////////// Helper Functions ////////////////////
 
 inline void check_err(int fd,std::string mssg){

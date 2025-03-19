@@ -37,6 +37,7 @@ void serverAsWriter(int sockfd,Context *ctx);
 void serverAsReader(int sockfd,Context *ctx);
 
 const char* SHARED_MEM_NAME = "/context_shared_mem"; // Shared memory secret key
+#define SEM_NAME "/my_binary_semaphore"
 
 int main(int argc, char **argv){
 
@@ -45,7 +46,19 @@ int main(int argc, char **argv){
 		printf("Enter Format: ./server_exe <ServerPort>\n");
 		exit(1);
 	}
-	
+
+    // Try to create the semaphore, if already exists just open it
+    sem_t* sem = sem_open(SEM_NAME, O_CREAT | O_EXCL, 0666, 0);
+    if (sem == SEM_FAILED) {
+        if (errno == EEXIST) {
+            // Semaphore already exists, just open it
+            sem = sem_open(SEM_NAME, 0);
+        } else {
+            perror("sem_open failed");
+            return 1;
+        }
+    }
+
 	//creating the socket
 	std::cout<<"Socket Setup\n";
 	int sockfd= socket(AF_INET,SOCK_DGRAM,0);
@@ -119,6 +132,7 @@ int main(int argc, char **argv){
 		ctx->current_blk = pkt.block_number;
 		strncpy(ctx->fileName, pkt.filename, sizeof(ctx->fileName) - 1);
 		ctx->fileName[sizeof(ctx->fileName) - 1] = '\0';  // Ensure null termination
+		ctx->curr_Win = ctx->WindowSize;
 
 		std::cout << "Client IP: " << ctx->clientIp << std::endl;
 		std::cout << "Client Port: " << ctx->clientPort << std::endl;
@@ -138,6 +152,10 @@ int main(int argc, char **argv){
 		}
 	}
 	else{// This process is a Backup
+	
+		std::cout<<"Waiting On Semaphore\n";
+		sem_wait(sem);  // Block until producer[switch] signals
+
 		if(ctx->choice == 'R'){
 			std::cout<<"Continuing Read RQ\n";
 			serverAsWriter(sockfd,ctx);
