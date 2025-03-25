@@ -50,7 +50,12 @@ bool readConfigFile(const std::string& fileName, Config& config) {
 
 int main(int argc, char* argv[]) {
     if (argc != 2) {
-        std::cerr << "Usage: " << argv[0] << " <config_file>" << std::endl;
+        std::cout << "Usage: " << argv[0] << " <config_file>" << std::endl;
+        std::cout << "Contents of Config File :-\n";
+        std::cout << "The first Line has Switch Ip\n";
+        std::cout << "The second Line has Switch Port\n";
+        std::cout << "The third Line has R or W to symbolise read or write\n";
+        std::cout << "The last line has file path \n";
         return 1;
     }
 

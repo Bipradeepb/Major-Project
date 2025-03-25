@@ -1,7 +1,7 @@
 /*
-This is a switching emulator cum Watchdog for TFTP service
+This is a switching emulator cum Watchdog for FTP service
 
-Sits between Client Layer and Load Balancer Layer
+Sits between Client Layer and server Layer
 */
 #include "Globals.hpp"
 
@@ -36,15 +36,41 @@ void load_configuration(const std::string& fileName) {
 }
 
 #define SEM_NAME "/my_binary_semaphore"
+#define SHM_PATH "/dev/shm/context_shared_mem"
+static int sockfd; // limiting to this translational unit
+
+void signalHandler(int signal) {
+    std::cout << "\nReceived signal: " << signal << " (SIGINT). Exiting gracefully...\n";
+
+    // closing socket
+    close(sockfd);
+    // Remove the named semaphore
+    if (sem_unlink(SEM_NAME) == 0) {
+        std::cout << "Semaphore " << SEM_NAME << " removed successfully.\n";
+    } else {
+        perror("sem_unlink failed");
+    }
+    // Remove the shared memory file
+    if (std::system(("rm -f " + std::string(SHM_PATH)).c_str()) == 0) {
+        std::cout << "Shared memory " << SHM_PATH << " removed successfully.\n";
+    } else {
+        std::cerr << "Failed to remove shared memory " << SHM_PATH << "\n";
+    }
+
+    exit(1);  // Terminate the program
+}
 
 int main(int argc, char **argv){
 
 	// checking command line args
 	if (argc <2){
 		printf("Enter format :- ./build/sw_exe <sw_Port> <configFilePath>\n");
-		std::cout<<"Config File Format :\n The first line contains threshold (an integer).\nThe second line contains the active LB(Ip_Port).\nThe third line contains the backup LB(Ip_Port).\n";
+		std::cout<<"Config File Format :\nThe first line contains threshold (an integer).\nThe second line contains the active server(Ip_Port).\nThe third line contains the backup server(Ip_Port).\n";
 		exit(1);
 	}
+
+    //handle graceful termination
+    std::signal(SIGINT, signalHandler);
 
 	//init global data-structures
 	load_configuration(argv[2]);

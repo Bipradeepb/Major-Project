@@ -3,7 +3,7 @@ CXX := g++
 CXXFLAGS := -Wall -Iincludes        # Basic flags with include path
 BUILD_DIR := build
 SRC_DIR := src
-TARGET := $(BUILD_DIR)/server_exe
+TARGET := $(BUILD_DIR)/ser_exe
 
 # Find all .cpp files in src directory and its subdirectories
 SRC_FILES := $(shell find $(SRC_DIR) -name '*.cpp')

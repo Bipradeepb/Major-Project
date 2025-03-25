@@ -43,7 +43,7 @@ int main(int argc, char **argv){
 
 	// checking command line args
 	if (argc <2){
-		printf("Enter Format: ./server_exe <ServerPort>\n");
+		printf("Usage: ./build/ser_exe <ServerPort>\n");
 		exit(1);
 	}
 
@@ -107,6 +107,7 @@ int main(int argc, char **argv){
         return 1;
     }
 
+setup:
     // If new, initialize memory and Fill up Context For 1st Time
     if (is_new) {
         memset(ctx, 0, sizeof(Context));
@@ -169,6 +170,11 @@ int main(int argc, char **argv){
 	}
 
 	
+	// Reach here => Single File Transfer complete
+	std::cout<<"Setting up server for Next File Transfer\n";
+	is_new = true; // setting up for Next File Transfer
+	goto setup;
+
 	return 0;
 }
 

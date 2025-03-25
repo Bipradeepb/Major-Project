@@ -40,5 +40,9 @@ void readThread(int sockfd, Context* ctx) {
             flag_Ack_Recv= true;
             std::this_thread::sleep_for(std::chrono::milliseconds(500));
         }
-    }
+
+        //Signal Recv from Frwd thread to stop
+        if(stop_flag == true)
+            break;
+    }// end of inf loop
 }

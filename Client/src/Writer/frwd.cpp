@@ -110,6 +110,8 @@ void forwardThread(int sockfd, const Config* ctx){
 
     }// Loop Back to transmit Next Window
  
-    // Reach Here ==> Full File Transfer Complete        
-
+    // Reach Here ==> Full File Transfer Complete
+    std::cout<<"Closing Socket and Exiting\n";        
+    close(sockfd);
+    exit(0);//terminate program
 }

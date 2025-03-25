@@ -111,5 +111,5 @@ void forwardThread(int sockfd, Context* ctx) {
     }// Loop Back to transmit Next Window
  
     // Reach Here ==> Full File Transfer Complete        
-
+    stop_flag = true; // signal Read thread to also stop
 }
