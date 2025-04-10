@@ -1,7 +1,7 @@
 #include "globals.hpp"
 #include "packets.hpp"
 
-void writeFileBlock(const std::string& fileName,std::string data , int data_size){
+void writeFileBlock(const std::string& fileName,const std::string& data , int data_size){
     const char* fileMode = "ab";  // "ab" for append binary, "a" for append text
 
     // Open the file in the specified mode
@@ -15,11 +15,11 @@ void writeFileBlock(const std::string& fileName,std::string data , int data_size
     fwrite(data.c_str(), sizeof(unsigned char), data_size, file);
 
     // Close the file
-    fclose(file); 
+    fclose(file);
 
 }
 
-#define TIMEOUT_SEC 2
+
 void  serverAsReader(int sockfd, Context* config) {
 
     struct sockaddr_in recvAddr;
@@ -38,14 +38,14 @@ void  serverAsReader(int sockfd, Context* config) {
     unsigned char* ack_packet = build_ack_packet(config->current_blk);
     while (true) {
         //Send Read Request
-        std::cout<<"Send ACK- "<<config->current_blk<<"\n";        
+        std::cout<<"Send ACK- "<<config->current_blk<<"\n";
         sendto(sockfd, ack_packet, 4, 0, (struct sockaddr*)&clientAddr, sizeof(clientAddr));
         //setup for timeout
         FD_ZERO(&readfds);
         FD_SET(sockfd, &readfds);
         timeout.tv_sec = TIMEOUT_SEC;
         timeout.tv_usec = 0;
-        
+
         int activity = select(sockfd + 1, &readfds, nullptr, nullptr, &timeout);
         if(activity < 0){
             std::cout<<"Select Sys Call Failed inside clientAsReader\n";
@@ -60,7 +60,7 @@ void  serverAsReader(int sockfd, Context* config) {
             break;
         }
     }// end of inf loop
-    
+
     free(ack_packet);
     bool flag = true; // Denotes 1st Packet[Data] recv after send Ack-0
 
@@ -72,7 +72,7 @@ void  serverAsReader(int sockfd, Context* config) {
             FD_SET(sockfd, &readfds);
             timeout.tv_sec = TIMEOUT_SEC;
             timeout.tv_usec = 0;
-            
+
             int activity = select(sockfd + 1, &readfds, nullptr, nullptr, &timeout);
             if(activity < 0){
                 std::cout<<"Select Sys Call Failed inside clientAsReader\n";
@@ -86,16 +86,16 @@ void  serverAsReader(int sockfd, Context* config) {
                 free(ack_packet);
                 config->curr_Win = config->WindowSize;
                 continue;
-            }         
+            }
         }
 
         bzero(buffer,BUFFER_SIZE);
         ssize_t recv_len = recvfrom(sockfd, buffer, BUFFER_SIZE, 0, (struct sockaddr*)&recvAddr, &recvAddrLen);
         flag = false;
-        
+
         if (buffer[1] == 3) { // Data packet
             DATA_Packet data_pkt = extract_data_packet(buffer, recv_len);
-            
+
             std::cout<<"Expected Blk Num "<<config->current_blk<<" Recv Blk Num "<<data_pkt.block_number<<"\n";
 
             if (data_pkt.block_number == config->current_blk) {
@@ -108,7 +108,7 @@ void  serverAsReader(int sockfd, Context* config) {
                 unsigned char* ack_packet = build_ack_packet(config->current_blk);
                 sendto(sockfd, ack_packet, 4, 0, (struct sockaddr*)&clientAddr, sizeof(clientAddr));
                 free(ack_packet);
-                config->curr_Win = config->WindowSize;                
+                config->curr_Win = config->WindowSize;
             }
             //std::cout<<"config->curr_Win = "<<config->curr_Win<<"\n";
             if(config->curr_Win == 0){
@@ -119,9 +119,10 @@ void  serverAsReader(int sockfd, Context* config) {
                 config->curr_Win = config->WindowSize;
             }
 
+            free(data_pkt.data);//free resource
             if(data_pkt.data_size < 512) break; // Last data packet
         }
-                
+
     }// end of inf loop
 
     //Handle Last Packet Recv:-
@@ -131,14 +132,14 @@ void  serverAsReader(int sockfd, Context* config) {
         unsigned char* ack_packet = build_ack_packet(config->current_blk);
         sendto(sockfd, ack_packet, 4, 0, (struct sockaddr*)&clientAddr, sizeof(clientAddr));
         free(ack_packet);
-        
+
         //setup for timeout
         FD_ZERO(&readfds);
         FD_SET(sockfd, &readfds);
         timeout.tv_sec = TIMEOUT_SEC;
         timeout.tv_usec = 0;
-        
-        int activity = select(sockfd + 1, &readfds, nullptr, nullptr, &timeout);   
+
+        int activity = select(sockfd + 1, &readfds, nullptr, nullptr, &timeout);
 
         if(activity == 0){// Timeout ==> Great We Can Finally END
             break;
@@ -146,16 +147,12 @@ void  serverAsReader(int sockfd, Context* config) {
         else if(activity >0){ // Sent Final ACK lost ==> Server Resend Data Packet
             recvfrom(sockfd, buffer, BUFFER_SIZE, 0, (struct sockaddr*)&recvAddr, &recvAddrLen);
             //discard this buffer
-            continue;  
+            continue;
         }
     }
-    
-    std::cout<< "Received Full File \n";  
+
+    std::cout<< "Received Full File \n";
     close(sockfd);
 
 
 }
-
-
-
-

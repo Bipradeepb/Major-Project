@@ -12,13 +12,13 @@ void readThread(int sockfd, Context* ctx) {
         FD_ZERO(&read_fds);
         FD_SET(sockfd, &read_fds);
 
-        timeout.tv_sec = 4;  // 4-second timeout for ACK
+        timeout.tv_sec = TIMEOUT_SEC;
         timeout.tv_usec = 0;
 
         int activity = select(sockfd + 1, &read_fds, NULL, NULL, &timeout);
 
         // ACK packet recv
-        if (activity > 0) { 
+        if (activity > 0) {
             unsigned char ack_buf[4];
             int recv_len = recvfrom(sockfd, ack_buf, sizeof(ack_buf), 0, (struct sockaddr*)&clientAddr, &addrLen);
 
@@ -29,16 +29,16 @@ void readThread(int sockfd, Context* ctx) {
                 ctx->current_blk = ack.block_number; // Update current block
                 last_ack_blk = ctx->current_blk;
                 flag_Ack_Recv= true; // technically means current_blk updated
-                std::this_thread::sleep_for(std::chrono::milliseconds(500));
+                //std::this_thread::sleep_for(std::chrono::milliseconds(15));
             }
-        } 
+        }
         // Timeout case for ACK
         else if (activity == 0) {
-            std::cout<<"Timeout For ACK\n"; 
+            std::cout<<"Timeout For ACK\n";
             std::lock_guard<std::mutex> lock(mtx);
             ctx->current_blk = last_ack_blk; // Retransmit from last ACKed block
             flag_Ack_Recv= true;
-            std::this_thread::sleep_for(std::chrono::milliseconds(500));
+            //std::this_thread::sleep_for(std::chrono::milliseconds(15));
         }
 
         //Signal Recv from Frwd thread to stop

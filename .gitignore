@@ -1,3 +1,4 @@
-./Client/build
-./Server/build
-./Switch/build
+**/Demo/
+**/build/
+**/config.txt
+**/core

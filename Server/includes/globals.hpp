@@ -39,9 +39,10 @@ inline void check_err(int fd,std::string mssg){
 	if(fd <0){
 		perror(mssg.c_str());
 		exit(1);
-	}	
+	}
 }
 
+#define TIMEOUT_SEC 2
 inline std::mutex mtx;  // Mutex for synchronizing access to current_blk
 inline bool flag_Ack_Recv = false;// used in Writer to signal Read and Write thread
 inline std::atomic<bool> stop_flag{false}; // used in Writer to signal Read and Write thread

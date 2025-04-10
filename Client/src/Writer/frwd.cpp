@@ -13,7 +13,7 @@ std::pair<unsigned char*,size_t> readFileBlock(const std::string& fileName, int 
     }
 
     //std::cout<<"File size is "<<ftell(file) << " fileMode "<<fileMode<<" fileName = "<< fileName.c_str()<<"\n";
-    
+
     // Calculate the offset and seek to that position in the file
     long offset = block_num * 512;
     if (fseek(file, offset, SEEK_SET) != 0) {
@@ -37,7 +37,7 @@ std::pair<unsigned char*,size_t> readFileBlock(const std::string& fileName, int 
 
     // Go back to the original position after checking file size
     fseek(file, currentPos, SEEK_SET);
-    
+
     // Allocate memory for reading 512 bytes
     unsigned char* buffer = new unsigned char[512];
     std::memset(buffer, 0, 512);  // Initialize buffer with 0
@@ -68,7 +68,7 @@ void forwardThread(int sockfd, const Config* ctx){
       limit = current_blk + ctx->serverWindowSize -1;
       mtx.unlock();
 
-    Windowloop:   
+    Windowloop:
         mtx.lock();
         auto blk = readFileBlock(ctx->filePath, current_blk , "octet");
         if(blk.second ==0){// Out of Bound File Access
@@ -81,11 +81,15 @@ void forwardThread(int sockfd, const Config* ctx){
         sendto(sockfd, packet, blk.second + 4, 0, (struct sockaddr*)&clientAddr, sizeof(clientAddr));
         current_blk ++;
 
-        if(current_blk <= limit){
-            mtx.unlock();
-             std::this_thread::sleep_for(std::chrono::milliseconds(500)); // In the meanTime Wait if RecvThread Timeouts or Recv New ACK
+        //free resource
+        free(packet);
+        delete [] (blk.first);
 
-            mtx.lock();
+        if(current_blk <= limit){
+            // mtx.unlock();
+            // std::this_thread::sleep_for(std::chrono::milliseconds(50)); // In the meanTime Wait if RecvThread Timeouts or Recv New ACK
+
+            // mtx.lock();
             if(flag_Ack_Recv){
                 std::cout<<"Updated [After recv ACK ]current_blk = "<<current_blk<<"\n";
                 flag_Ack_Recv = false;
@@ -96,22 +100,22 @@ void forwardThread(int sockfd, const Config* ctx){
             goto Windowloop;
         }
         mtx.unlock(); // Finished Transmitting Entire Window
-        
+
         //Before Going to Next Window Wait For ACK recv / Ack Timeout
         ack_loop:
         mtx.lock();
         if(flag_Ack_Recv != true){
             mtx.unlock();
-            std::this_thread::sleep_for(std::chrono::milliseconds(500));
+            //std::this_thread::sleep_for(std::chrono::milliseconds(50));
             goto ack_loop;
         }
         flag_Ack_Recv = false;
         mtx.unlock();
 
     }// Loop Back to transmit Next Window
- 
+
     // Reach Here ==> Full File Transfer Complete
-    std::cout<<"Closing Socket and Exiting\n";        
+    std::cout<<"Closing Socket and Exiting\n";
     close(sockfd);
     exit(0);//terminate program
 }

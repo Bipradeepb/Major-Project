@@ -17,7 +17,7 @@ void reader_thread(int sockfd){
         ssize_t received_bytes = recvfrom(sockfd, buffer, BUFFER_SIZE, 0, (struct sockaddr*)&sender_addr, &sender_len);
         check_err(received_bytes,"recvfrom failed");
         buffer[received_bytes] = '\0';  // Null-terminate the received data
-        
+
 
         // Convert senders address to a readable IP and port
         bzero(sender_ip,INET_ADDRSTRLEN);
@@ -26,7 +26,7 @@ void reader_thread(int sockfd){
 
         // Create a unique key associated with every sender
         sender_key = std::string(sender_ip) + "_" + std::to_string(sender_port);
-        
+
         //debug::
         std::cout<<" Just received a packet from "<<sender_key<<" and start decoding his packet\n";
 
@@ -42,14 +42,14 @@ void reader_thread(int sockfd){
             mtx_wd.unlock();
 
             //create job
-            job thejob;
-            thejob.destn_type = 'C';
-            thejob.destn = the_actual_client_key;
-            thejob.packet_size = received_bytes;
-            thejob.packet = (char *)malloc(thejob.packet_size);
-            memcpy((void *)thejob.packet, buffer, thejob.packet_size);
-            
-            
+            job* thejob = new job;
+            thejob->destn_type = 'C';
+            thejob->destn = the_actual_client_key;
+            thejob->packet_size = received_bytes;
+            thejob->packet = (char *)malloc(thejob->packet_size);
+            memcpy((void *)thejob->packet, buffer, thejob->packet_size);
+
+
             //push job to WorkQ
             {
                 std::lock_guard<std::mutex> lock2(mtx_WorkQ);
@@ -58,24 +58,24 @@ void reader_thread(int sockfd){
             std::cout<<"Mssg recv from Active server | Job created and Push to WorkQ\n";
 
         }
-        else{// recv mssg is from sender
+        else{// recv mssg is from client
 
             the_actual_client_key = sender_key;
 
             // create job;
-            job thejob;
-            thejob.destn_type = 'S';
-            thejob.destn = curr_active;            
-            thejob.packet_size = received_bytes;
-            thejob.packet = (char *)malloc(thejob.packet_size);
-            memcpy((void *)thejob.packet, buffer, thejob.packet_size);
+            job* thejob = new job;
+            thejob->destn_type = 'S';
+            thejob->destn = curr_active;
+            thejob->packet_size = received_bytes;
+            thejob->packet = (char *)malloc(thejob->packet_size);
+            memcpy((void *)thejob->packet, buffer, thejob->packet_size);
 
             //push job to WorkQ
             {
                 std::lock_guard<std::mutex> lock2(mtx_WorkQ);
                 WorkQ.push_back(thejob);
             }
-            std::cout<<"Mssg recv from sender | Job created and Push to WorkQ\n";
+            std::cout<<"Mssg recv from client | Job created and Push to WorkQ\n";
         }
 
         cv_work.notify_one(); // notifies the frwd thread that WorQ has data
