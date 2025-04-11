@@ -2,6 +2,7 @@
 // how to use -->prithi@HP$./server.out <ServerPort>
 #include "globals.hpp"
 #include "packets.hpp"
+#include "Logger.hpp"
 
 /*
 
@@ -25,11 +26,11 @@ Header Formats
 Note1:    The data field is from zero to 512 bytes long.  If it is 512 bytes
    	  long, the block is not the last block of data; if it is from zero to
    	  511 bytes long, it signals the end of the transfer.
-   
+
 Note2:  a.A WRQ is acknowledged with an ACK packet having a block number of zero.
 	b.The WRQ and DATA packets are acknowledged by ACK or ERROR packets
 	c.The RRQ and ACK packets are acknowledged by  DATA  or ERROR packets.
-	d. All  packets other than duplicate ACK's and those used for termination are acknowledged unless a timeout occurs	
+	d. All  packets other than duplicate ACK's and those used for termination are acknowledged unless a timeout occurs
 
 */
 
@@ -60,21 +61,21 @@ int main(int argc, char **argv){
     }
 
 	//creating the socket
-	std::cout<<"Socket Setup\n";
+	LOG_TO(LogDestination::TERMINAL_ONLY,"Socket Setup\n");
 	int sockfd= socket(AF_INET,SOCK_DGRAM,0);
 	check_err(sockfd,"Error in opening UDP socket");
-	
+
 	// setting server details
 	struct sockaddr_in sa;
 	bzero(&sa,sizeof(sa));
 	sa.sin_family = AF_INET;//setting address family to IPv4
 	sa.sin_port = htons(atoi(argv[1]));
 	sa.sin_addr.s_addr=INADDR_ANY;
-	
+
 	// binding
 	int status= bind(sockfd,(struct sockaddr *) &sa, sizeof(sa));
 	check_err(status,"Error in binding");
-	
+
 	//////////////////////////////////// Setting UP Context for ACTIVE / BACKUP /////////////////
     int shm_fd;
     bool is_new = false;
@@ -89,9 +90,9 @@ int main(int argc, char **argv){
             return 1;
         }
         is_new = true;
-        std::cout << "Created new shared memory.\n";
+        LOG_TO(LogDestination::TERMINAL_ONLY, "Created new shared memory.\n");
     } else {
-        std::cout << "Using existing shared memory.\n";
+        LOG_TO(LogDestination::TERMINAL_ONLY, "Using existing shared memory.\n");
     }
 
     // Resize only if it's newly created
@@ -111,15 +112,15 @@ setup:
     // If new, initialize memory and Fill up Context For 1st Time
     if (is_new) {
         memset(ctx, 0, sizeof(Context));
-    
-		/////////////////////////////////// SyncIng With Client //////////////////		
+
+		/////////////////////////////////// SyncIng With Client //////////////////
 		struct sockaddr_in clientaddr{};
 		socklen_t addr_len = sizeof(clientaddr);
 
 		u_char buffer[BUFFER_SIZE]={0};
 
 		// Receive RD/WR packet
-		std::cout<<"Waiting For RD/WR of Client\n";
+		LOG_TO(LogDestination::BOTH,"Waiting For RD/WR of Client\n");
 		ssize_t recv_len = recvfrom(sockfd, buffer, BUFFER_SIZE, 0, (struct sockaddr*)&clientaddr, &addr_len);
 		check_err(recv_len,"RD/WR recv failed");
 
@@ -135,58 +136,49 @@ setup:
 		ctx->fileName[sizeof(ctx->fileName) - 1] = '\0';  // Ensure null termination
 		ctx->curr_Win = ctx->WindowSize;
 
-		std::cout << "Client IP: " << ctx->clientIp << std::endl;
-		std::cout << "Client Port: " << ctx->clientPort << std::endl;
-		std::cout << "Server Window Size: " << ctx->WindowSize << std::endl;
-		std::cout << "Current_blk: " << ctx->current_blk << std::endl;
-		std::cout << "File Path To Be Read/Written: " << ctx->fileName << std::endl;
+		LOG_TO(LogDestination::BOTH, "Client IP: " ,ctx->clientIp ,"\n");
+		LOG_TO(LogDestination::BOTH, "Client Port: " ,ctx->clientPort ,"\n");
+		LOG_TO(LogDestination::BOTH, "Server Window Size: " ,ctx->WindowSize ,"\n");
+		LOG_TO(LogDestination::BOTH, "Current_blk: " ,ctx->current_blk ,"\n");
+		LOG_TO(LogDestination::BOTH, "File Path To Be Read/Written: " ,ctx->fileName ,"\n------------------------------------------------------------------\n");
 
-		if(buffer[1]==1){ // Read Packet recv			
+		if(buffer[1]==1){ // Read Packet recv
 			ctx->choice='R';
-			std::cout<<"Recv Read RQ\n";
+			LOG_TO(LogDestination::BOTH,"Recv Read RQ\n");
+			LOG_TO(LogDestination::TERMINAL_ONLY,"\n\n..Ongoing FileTransfer...\n\n");
 			serverAsWriter(sockfd,ctx);
 		}
-		else{ // Write Packet recv			
+		else{ // Write Packet recv
 			ctx->choice='W';
-			std::cout<<"Recv Write RQ\n";
+			LOG_TO(LogDestination::BOTH,"Recv Write RQ\n");
+			LOG_TO(LogDestination::TERMINAL_ONLY,"\n\n..Ongoing FileTransfer...\n\n");
 			serverAsReader(sockfd,ctx);
 		}
 	}
 	else{// This process is a Backup
-	
-		std::cout<<"Waiting On Semaphore\n";
+
+		LOG_TO(LogDestination::BOTH,"Waiting On Semaphore\n");
 		sem_wait(sem);  // Block until producer[switch] signals
 
 		if(ctx->choice == 'R'){
-			std::cout<<"Continuing Read RQ\n";
+			LOG_TO(LogDestination::BOTH,"Continuing Read RQ\n");
+			LOG_TO(LogDestination::TERMINAL_ONLY,"\n\n..Ongoing FileTransfer...\n\n");
 			serverAsWriter(sockfd,ctx);
 		}
-			
+
 		else{
-			std::cout<<"Continuing Write RQ\n";
+			LOG_TO(LogDestination::BOTH,"Continuing Write RQ\n");
+			LOG_TO(LogDestination::TERMINAL_ONLY,"\n\n..Ongoing FileTransfer...\n\n");
 			serverAsReader(sockfd,ctx);
 		}
-			
+
 	}
 
-	
+
 	// Reach here => Single File Transfer complete
-	std::cout<<"Setting up server for Next File Transfer\n";
+	LOG_TO(LogDestination::BOTH,"Setting up server for Next File Transfer\n");
 	is_new = true; // setting up for Next File Transfer
 	goto setup;
 
 	return 0;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
