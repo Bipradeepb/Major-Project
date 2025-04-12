@@ -140,6 +140,15 @@ void MainWindow::on_startButton_clicked()
     ui->logTextEdit->append(QString("Starting client: %1 %2").arg(clientExecutablePath).arg(arguments.join(" ")));
     ui->startButton->setEnabled(false);
     ui->endButton->setEnabled(true); // Ensure End Client button is enabled when starting
+
+    bool ok;
+    totalFileSize = ui->file_size->text().toLongLong(&ok);
+    //qDebug() << "File Size Input:" << ui->file_size->text() << ", Converted Size:" << totalFileSize << ", OK:" << ok;
+
+    if (!ok || totalFileSize <= 0) {
+        QMessageBox::warning(this, "Warning", "Invalid file size provided. Progress bar might not work correctly.");
+        totalFileSize = 0;
+    }
 }
 
 void MainWindow::on_endButton_clicked()
@@ -172,32 +181,37 @@ void MainWindow::clientErrorReady()
 //Progress Bar Tracking
 void MainWindow::parseClientOutput(const QString& output)
 {
-    // Track 'expect_blk_num'
-    QRegularExpression expectBlkRegex("Full Win Recv :- Sending ACK with blk = (\\d+)\n$");
+    // Track 'expect_blk_num' from regular ACK (optional newline at the end)
+    QRegularExpression expectBlkRegex("Full Win Recv :- Sending ACK with blk = (\\d+)");
     QRegularExpressionMatch expectBlkMatch = expectBlkRegex.match(output);
     if (expectBlkMatch.hasMatch() && totalFileSize > 0) {
         qint64 currentBlock = expectBlkMatch.captured(1).toLongLong();
         qint64 totalBlocks = (totalFileSize + 1) / 512; // Calculate total blocks
+        //qDebug() << "Regular ACK found - Block Number:" << currentBlock << "Total Blocks:" << totalBlocks;
         if (totalBlocks > 0) {
             int progress = static_cast<int>((static_cast<double>(currentBlock) / totalBlocks) * 100);
             ui->progressBar->setValue(progress);
+            //qDebug() << "Progress (Regular ACK):" << progress;
         }
     }
 
-    // Track 'ack.block_number'
-    QRegularExpression ackBlkRegex("ACK recv with blk num = (\\d+)\n$");
+    // Track 'ack.block_number' (optional newline at the end)
+    QRegularExpression ackBlkRegex("ACK recv with blk num = (\\d+)");
     QRegularExpressionMatch ackBlkMatch = ackBlkRegex.match(output);
     if (ackBlkMatch.hasMatch() && totalFileSize > 0) {
         qint64 currentBlock = ackBlkMatch.captured(1).toLongLong();
         qint64 totalBlocks = (totalFileSize + 1) / 512; // Calculate total blocks
+        //qDebug() << "ACK Received found - Block Number:" << currentBlock << "Total Blocks:" << totalBlocks;
         if (totalBlocks > 0) {
             int progress = static_cast<int>((static_cast<double>(currentBlock) / totalBlocks) * 100);
             ui->progressBar->setValue(progress);
+            //qDebug() << "Progress (ACK Recv):" << progress;
         }
     }
 
-    // Check for completion messages
+    // Check for completion messages (optional newline at the end)
     if (output.contains("Received Full File ") || output.contains("File Transfer Complete ")) {
         ui->progressBar->setValue(100);
+        //qDebug() << "File transfer complete - Progress: 100%";
     }
 }
