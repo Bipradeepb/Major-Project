@@ -1,0 +1,28 @@
+Package: udp-ft-suite
+Version: 1.0.0-1
+Architecture: amd64
+Maintainer: pb-dot
+Description: Highly Avaiable File Transfer Suite
+ A suite of tools for file transfer using  UDP + go-back-n protocol.
+ Includes a Server, a command-line Client, a GUI Client, and a Switch.
+ .
+ This package bundles necessary Qt6 libraries for the GUI client.
+Depends: libc6 (>= 2.35),
+         libstdc++6 (>= 12),
+         libgcc-s1 (>= 4.2),
+         libgl1,
+         libglx0,
+         libegl1,
+         libfontconfig1,
+         libfreetype6 (>= 2.2.1),
+         libx11-6,
+         libxcb1,
+         libxkbcommon0,
+         libdbus-1-3,
+         zlib1g,
+         libzstd1,
+         libpng16-16,
+         libpcre2-8-0
+Provides: udp-ft-suite
+Section: net
+Priority: optional

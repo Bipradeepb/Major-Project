@@ -48,7 +48,9 @@ ie After killing the switch (ur servers are useless kill and restart them) <br>
 ## Distribution of Codebase( - Using tar.gz file )
 
 Zip it --> tar -czvf Go_Back_N_PB.tar.gz /home/prtihijit/Desktop/MajorProect <br>
-Unzip it --> tar -xzvf Go_Back_N_PB.tar.gz -C [path where u want to Download]
+Unzip it --> tar -xzvf Go_Back_N_PB.tar.gz -C [path where u want to Download] <br>
+
+**Or if consider Using Debian pkg :- Go to the ReadMe under pkg_debian folder for More details**
 
 ## Server Side Logger and Client Side GUI
 
