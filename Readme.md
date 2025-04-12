@@ -34,10 +34,10 @@ Both switch and client are using config.txt[ also have been provided in this rep
 Change the config files to alter the behaviour and get results as u want
 
     As per this repo's example setup Follow the below order(top 2 bottom) strictly
-        1st Terminal run>  ./build/ser_exe 8000
-        2nd Terminal run>  ./build/ser_exe 8001
-        3rd Terminal run>  ./build/sw_exe 9999 ./config.txt
-        4th Terminal run>  ./build/cli_exe ./config.txt
+        1st Terminal inside Server run>  ./build/ser_exe 8000
+        2nd Terminal inside Server run>  ./build/ser_exe 8001
+        3rd Terminal inside Switch run>  ./build/sw_exe 9999 ./config.txt
+        4th Terminal inside Client run>  ./build/cli_exe ./config.txt
 
 -->Special Note:- <br>
 To free the resources( shared Memory / semaphore ) used by the servers and switch <br>
@@ -49,3 +49,27 @@ ie After killing the switch (ur servers are useless kill and restart them) <br>
 
 Zip it --> tar -czvf Go_Back_N_PB.tar.gz /home/prtihijit/Desktop/MajorProect <br>
 Unzip it --> tar -xzvf Go_Back_N_PB.tar.gz -C [path where u want to Download]
+
+## Server Side Logger and Client Side GUI
+
+--> U should first have the below setup[directory structure] <br>
+
+        prtihijit@hp-250-g6:~$ ls Desktop/MajorProect/ <br>
+        cleanUp  Client ClientUI Readme.md  Server  Switch <br>
+
+--> build gui ClientUI [exe generated inside Client build folder] by:-  <br>
+
+        1. cd Client <br>
+        2. prtihijit@hp-250-g6:~/Desktop/go-back-n/Client$ cmake -S ../ClientUI/ -B ./build/ -DCMAKE_PREFIX_PATH=/home/prtihijit/Qt/6.9.0/gcc_64/lib/cmake <br>
+        3. prtihijit@hp-250-g6:~/Desktop/go-back-n/Client$ cmake --build ./build <br>
+
+--> Building [generating exe] for Rest:- Switch Client Server remains same as above
+
+--> Running:-
+
+    As per this repo's example setup Follow the below order(top 2 bottom) strictly
+        1st Terminal inside Server run>  LOG_ON=1 ./build/ser_exe 8000 # to generate Log Files under Server/Logs
+        Or , 1st Terminal inside Server run>  ./build/ser_exe 8000 # Not generate Log Files 
+        2nd Terminal inside Server run>  LOG_ON=1 ./build/ser_exe 8001
+        3rd Terminal inside Switch run>  ./build/sw_exe 9999 ./config.txt
+        4th Terminal inside Client run>  ./build/ClientUI  #launches the GUI
