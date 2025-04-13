@@ -22,6 +22,8 @@ private:
     QProcess *clientProcess;
     QString configFilePath;
     qint64 totalFileSize;
+    QRegularExpression *expectBlkRegex;
+    QRegularExpression *ackBlkRegex;
 
 private slots:
     void on_saveButton_clicked();

@@ -1,6 +1,6 @@
 # Compiler and flags
 CXX := g++
-CXXFLAGS := -Wall -Iincludes -std=c++17 -MMD -MP  # Add flags for dependency generation
+CXXFLAGS := -Wall -Iincludes -std=c++17 -MMD -MP -O3 # Add flags for dependency generation
 BUILD_DIR := build
 SRC_DIR := src
 TARGET := $(BUILD_DIR)/ser_exe

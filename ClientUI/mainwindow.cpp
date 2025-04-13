@@ -20,9 +20,11 @@ MainWindow::MainWindow(QWidget *parent)
     , clientProcess(nullptr)
     , configFilePath("./config.txt") // Set the default config file path
     , totalFileSize(0)
+    , ackBlkRegex(new QRegularExpression ("ACK recv with blk num = (\\d+)"))
+    , expectBlkRegex(new QRegularExpression("Full Win Recv :- Sending ACK with blk = (\\d+)"))
 {
     ui->setupUi(this);
-    setWindowTitle("go-back-N Client@pb-dot"); // Set the new window title here
+    setWindowTitle("UDP-File-Transfer-Client"); // Set the new window title here
     setStyleSheet("QMainWindow { background-color: #f0f0f0; border: 1px solid #c0c0c0; }"); // Light gray background, thin border
 
     // Style for Labels - Assuming these are your label object names
@@ -182,11 +184,10 @@ void MainWindow::clientErrorReady()
 void MainWindow::parseClientOutput(const QString& output)
 {
     // Track 'expect_blk_num' from regular ACK (optional newline at the end)
-    QRegularExpression expectBlkRegex("Full Win Recv :- Sending ACK with blk = (\\d+)");
-    QRegularExpressionMatch expectBlkMatch = expectBlkRegex.match(output);
+    QRegularExpressionMatch expectBlkMatch = expectBlkRegex->match(output);
     if (expectBlkMatch.hasMatch() && totalFileSize > 0) {
         qint64 currentBlock = expectBlkMatch.captured(1).toLongLong();
-        qint64 totalBlocks = (totalFileSize + 1) / 512; // Calculate total blocks
+        qint64 totalBlocks = (totalFileSize + 511) / 512; // Calculate total blocks
         //qDebug() << "Regular ACK found - Block Number:" << currentBlock << "Total Blocks:" << totalBlocks;
         if (totalBlocks > 0) {
             int progress = static_cast<int>((static_cast<double>(currentBlock) / totalBlocks) * 100);
@@ -196,11 +197,10 @@ void MainWindow::parseClientOutput(const QString& output)
     }
 
     // Track 'ack.block_number' (optional newline at the end)
-    QRegularExpression ackBlkRegex("ACK recv with blk num = (\\d+)");
-    QRegularExpressionMatch ackBlkMatch = ackBlkRegex.match(output);
+    QRegularExpressionMatch ackBlkMatch = ackBlkRegex->match(output);
     if (ackBlkMatch.hasMatch() && totalFileSize > 0) {
         qint64 currentBlock = ackBlkMatch.captured(1).toLongLong();
-        qint64 totalBlocks = (totalFileSize + 1) / 512; // Calculate total blocks
+        qint64 totalBlocks = (totalFileSize + 511) / 512; // Calculate total blocks
         //qDebug() << "ACK Received found - Block Number:" << currentBlock << "Total Blocks:" << totalBlocks;
         if (totalBlocks > 0) {
             int progress = static_cast<int>((static_cast<double>(currentBlock) / totalBlocks) * 100);

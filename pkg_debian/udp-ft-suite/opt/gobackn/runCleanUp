@@ -1,0 +1,10 @@
+#!/bin/bash
+
+# Define the path to the bundled libraries
+LIB_DIR="/opt/gobackn/lib"
+
+# Define the path to the actual executable
+REAL_EXE="${LIB_DIR}/cleanUp"
+
+# Execute the real application, passing all arguments through through bundled linker and  .so files
+exec "$LIB_DIR/ld-linux-x86-64.so.2" --library-path "$LIB_DIR" "$REAL_EXE" "$@"

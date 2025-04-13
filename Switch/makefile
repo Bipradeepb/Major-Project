@@ -1,6 +1,6 @@
 # Compiler and flags
 CXX := g++
-CXXFLAGS := -Wall -Iinclude -MMD -MP  # Add flags for dependency generation
+CXXFLAGS := -Wall -Iinclude -std=c++17 -MMD -MP -O3 # Add flags for dependency generation
 BUILD_DIR := build
 SRC_DIR := src
 TARGET := $(BUILD_DIR)/sw_exe

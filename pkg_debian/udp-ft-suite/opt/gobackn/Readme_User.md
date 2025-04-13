@@ -13,7 +13,8 @@
 3. Keep the files used for Transfering Under Server/Demo and Client/Demo
 4. Use config.txt under Client and Switch To set configurations of the whole suite
 5. Do not touch the lib folder [used by GUI]
-6. While reading a file ensure a file of same name is not present [else corrupt] 
+6. While reading a file ensure a file of same name is not present [else corrupt]
+7. Ctrl + C Switch or run /opt/gobackn/runCleanUp [to clear Up Shared Mem & Semaphore] 
 
 ## Without Using Logger (on Server Side) and GUI (on Client side)
 

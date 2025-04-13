@@ -2,7 +2,7 @@ This is documentation on Building the Deb pkg
 
 **
     if u have a new sw_exe , ser_exe , cli_exe or ClientUI
-    Copy these into their respective folders under opt/gobackn/*/build
+    Run rebuild.sh script under helper scripts
 **
 
 the opt/gobackn/lib folder conatains the .so files of qmake on which my gui exe ClientUI depends
@@ -63,6 +63,8 @@ Depends: libfoo (>= 1.2)
 /*  I am even packing my own linker and all the .so files in lib So that on
 older versions of distros No [Undefined Symbol error or Package Not found error] ocuurs
 As Older linker Cant work with New so files */
+
+[To pack dependcies use copy_lib.sh under helper scripts]
 
 --> Building on older versions that exe can run of New versions of Ubuntu
 
