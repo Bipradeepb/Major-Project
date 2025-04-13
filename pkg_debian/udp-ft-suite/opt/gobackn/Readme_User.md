@@ -1,10 +1,10 @@
 ## Installing the pkg :-
 
-        sudo dpkg -i udp-ft-suite.deb
+        sudo apt install ./udp-ft-suite.deb
 
 ## Removing the pkg :-
 
-        sudo dpkg -r udp-ft-suite
+        sudo apt purge udp-ft-suite
 
 ## Norms of Usage :-
 
@@ -21,10 +21,10 @@
 
 2. As per example setup Follow the below order(top 2 bottom) strictly <br>
 
-        1st Terminal cd inside Server run>  ./build/ser_exe 8000
-        2nd Terminal cd inside Server run>  ./build/ser_exe 8001
-        3rd Terminal cd inside Switch run>  ./build/sw_exe 9999 ./config.txt
-        4th Terminal cd inside Client run>  ./build/cli_exe ./config.txt
+        1st Terminal cd inside Server run>  ./build/runServer 8000
+        2nd Terminal cd inside Server run>  ./build/runServer 8001
+        3rd Terminal cd inside Switch run>  ./build/runSwitch 9999 ./config.txt
+        4th Terminal cd inside Client run>  ./build/runCLI ./config.txt
 
 ## With Using Logger (on Server Side) and GUI (on Client side)
 
@@ -32,8 +32,8 @@
 
 2. As per this repo's example setup Follow the below order(top 2 bottom) strictly <br>
 
-        1st Terminal cd inside Server run>  LOG_ON=1 ./build/ser_exe 8000 # to generate Log Files under Server/Logs
-        Or , 1st Terminal cd inside Server run>  ./build/ser_exe 8000 # Not generate Log Files 
-        2nd Terminal cd inside Server run>  LOG_ON=1 ./build/ser_exe 8001
-        3rd Terminal cd inside Switch run>  ./build/sw_exe 9999 ./config.txt
+        1st Terminal cd inside Server run>  LOG_ON=1 ./build/runServer 8000 # to generate Log Files under Server/Logs
+        Or , 1st Terminal cd inside Server run>  ./build/runServer 8000 # Not generate Log Files 
+        2nd Terminal cd inside Server run>  LOG_ON=1 ./build/runServer 8001
+        3rd Terminal cd inside Switch run>  ./build/runSwitch 9999 ./config.txt
         4th Terminal cd inside Client run>  ./build/runGUI  #launches the GUI

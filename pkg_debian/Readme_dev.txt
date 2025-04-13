@@ -21,12 +21,12 @@ U can find the dependcies of any exe through ldd fileName command
 
 **
     installing the pkg (inside pkg_debian folder):-
-        sudo dpkg -i udp-ft-suite.deb
+        sudo apt install ./udp-ft-suite.deb
 **
 
 **
     Removing the pkg (from anywhere):-
-        sudo dpkg -r udp-ft-suite
+        sudo apt purge udp-ft-suite
 **
 
 --> Dont forget to do this before rebuilding the deb package
@@ -43,8 +43,27 @@ do ->   QT_DEBUG_PLUGINS=1 gui_exe [check for unloaded libaries when u close gui
 
 Maintain strict folder structure for plugins
 
---> To Use the lib folder [runGUI is written]
-
 Certain plugins also have dependcies keep them under lib
 
 plugins .so will not appear through ldd dump
+
+----------------------------------- For Older Distros  ----------------------
+--> Depends section of control file Does the following :-
+Depends: libfoo (>= 1.2)
+...and the system:
+    Has no libfoo installed
+
+    or has libfoo < 1.2
+
+    but libfoo >= 1.2 exists in the repositories... [upadte through sudo apt upadte]
+
+✅ apt will automatically install or upgrade libfoo to meet the requirement.
+
+
+/*  I am even packing my own linker and all the .so files in lib So that on
+older versions of distros No [Undefined Symbol error or Package Not found error] ocuurs
+As Older linker Cant work with New so files */
+
+--> Building on older versions that exe can run of New versions of Ubuntu
+
+// Dont upgrade glibc [system core package] may break ur OS

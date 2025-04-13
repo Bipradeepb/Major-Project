@@ -1,24 +1,32 @@
 #!/bin/bash
+set -e
 
 # Find the directory where this script resides
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+BASE_DIR="$(dirname "$(dirname "$SCRIPT_DIR")")"
 
-# Determine the base directory of the installation
-BASE_DIR="$(dirname "$(dirname "$SCRIPT_DIR")")" # Goes up two levels from Client/build to gobackn
-
-# Define the path to the bundled libraries
+# Paths
 LIB_DIR="${BASE_DIR}/lib"
-
-# Define the path to the actual executable
 REAL_EXE="${SCRIPT_DIR}/ClientUI"
+LINKER="${LIB_DIR}/ld-linux-x86-64.so.2"
 
-# Set the library path for the executable
-# The ${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH} part ensures we don't overwrite
-# any existing LD_LIBRARY_PATH, but rather prepend our directory.
+# Qt-specific plugin directories
+export QT_PLUGIN_PATH="${LIB_DIR}/plugins"
+export QT_QPA_PLATFORM_PLUGIN_PATH="${LIB_DIR}/plugins/platforms"
+
+# Safely prepend our lib path
 export LD_LIBRARY_PATH="${LIB_DIR}${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
 
-# Bundling Qt plugins in /opt/gobackn/lib/plugins:
-export QT_PLUGIN_PATH="${LIB_DIR}/plugins"
+# Validate existence
+if [[ ! -x "$REAL_EXE" ]]; then
+    echo "❌ Executable not found: $REAL_EXE" >&2
+    exit 1
+fi
 
-# Execute the real application, passing all arguments through
-exec "$REAL_EXE" "$@"
+if [[ ! -x "$LINKER" ]]; then
+    echo "❌ Linker not found: $LINKER" >&2
+    exit 1
+fi
+
+# Execute with our own dynamic linker to isolate from host glibc
+exec "$LINKER" --library-path "$LIB_DIR" "$REAL_EXE" "$@"
