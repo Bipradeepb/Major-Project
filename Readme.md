@@ -75,3 +75,9 @@ Unzip it --> tar -xzvf Go_Back_N_PB.tar.gz -C [path where u want to Download] <b
         2nd Terminal inside Server run>  LOG_ON=1 ./build/ser_exe 8001
         3rd Terminal inside Switch run>  ./build/sw_exe 9999 ./config.txt
         4th Terminal inside Client run>  ./build/ClientUI  #launches the GUI
+
+## Click to Watch Demo Video
+
+<a href="https://youtu.be/q3Czut1GRfo">
+    <img src="https://img.youtube.com/vi/q3Czut1GRfo/maxresdefault.jpg" alt="Watch the video" width="600">
+  </a>
