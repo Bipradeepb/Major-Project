@@ -1,14 +1,6 @@
-
-// how to use -->prithi@HP$./server.out <ServerPort>
-#include "globals.hpp"
-#include "packets.hpp"
-#include "Logger.hpp"
-
 /*
 
-Header Formats
-
-   Type   Op #     Format without header
+Header Formats (Similar to TFTP)
 
           2 bytes    string   1 byte    2 byte
           ------------------------------------------
@@ -34,19 +26,35 @@ Note2:  a.A WRQ is acknowledged with an ACK packet having a block number of zero
 
 */
 
+#include "globals.hpp"
+#include "packets.hpp"
+#include "Logger.hpp"
+
+
+struct Config {
+    int server_port;
+    std::string switch_ip;
+    int switch_port;
+};
+
+bool readConfigFromFile(const std::string& filename, Config& config);
 void serverAsWriter(int sockfd,Context *ctx);
 void serverAsReader(int sockfd,Context *ctx);
 
+
 const char* SHARED_MEM_NAME = "/context_shared_mem"; // Shared memory secret key
-#define SEM_NAME "/my_binary_semaphore"
 
 int main(int argc, char **argv){
 
 	// checking command line args
 	if (argc <2){
-		printf("Usage To Enable Verbose Logging to file$	LOG_ON_FILE=1 ./build/ser_exe <ServerPort> V\n");
-		printf("Usage To Enable Verbose Logging to Terminal$	./build/ser_exe <ServerPort> V\n");
-		printf("Usage To Min Logging to Terminal$	./build/ser_exe <ServerPort>\n");
+		std::cout << "Contents of Server Config File :-\n";
+        std::cout << "The first Line has Server Port\n";
+        std::cout << "The second Line has Switch Ip\n";
+        std::cout << "The third Line has Switch Port\n";
+		printf("\nUsage To Enable Verbose Logging to file$	LOG_ON_FILE=1 ./build/ser_exe <config.txt> V\n");
+		printf("Usage To Enable Verbose Logging to Terminal$	./build/ser_exe <config.txt> V\n");
+		printf("Usage To Min Logging to Terminal$	./build/ser_exe <config.txt>\n");
 		exit(1);
 	}
 	if(argc ==3){// checking for verbose logging
@@ -58,33 +66,9 @@ int main(int argc, char **argv){
 		LOG_Verbose = false;
 	}
 
-    // Try to create the semaphore, if already exists just open it
-    sem_t* sem = sem_open(SEM_NAME, O_CREAT | O_EXCL, 0666, 0);
-    if (sem == SEM_FAILED) {
-        if (errno == EEXIST) {
-            // Semaphore already exists, just open it
-            sem = sem_open(SEM_NAME, 0);
-        } else {
-            perror("sem_open failed");
-            return 1;
-        }
-    }
-
-	//creating the socket
-	LOG_TO(LogDestination::TERMINAL_ONLY,"Socket Setup\n");
-	int sockfd= socket(AF_INET,SOCK_DGRAM,0);
-	check_err(sockfd,"Error in opening UDP socket");
-
-	// setting server details
-	struct sockaddr_in sa;
-	bzero(&sa,sizeof(sa));
-	sa.sin_family = AF_INET;//setting address family to IPv4
-	sa.sin_port = htons(atoi(argv[1]));
-	sa.sin_addr.s_addr=INADDR_ANY;
-
-	// binding
-	int status= bind(sockfd,(struct sockaddr *) &sa, sizeof(sa));
-	check_err(status,"Error in binding");
+	//Loading Config:-
+	Config theConfig;
+	readConfigFromFile(argv[1],theConfig);
 
 	//////////////////////////////////// Setting UP Context for ACTIVE / BACKUP /////////////////
     int shm_fd;
@@ -118,7 +102,25 @@ int main(int argc, char **argv){
         return 1;
     }
 
-setup:
+////////////////////////////////// Each iteration does 1 complete file transfer
+while(1){
+	/////////////////////////////////////////creating the UDP socket
+	LOG_TO(LogDestination::TERMINAL_ONLY,"Socket Setup\n");
+	int sockfd= socket(AF_INET,SOCK_DGRAM,0);
+	check_err(sockfd,"Error in opening UDP socket");
+
+	// setting server details
+	struct sockaddr_in sa;
+	bzero(&sa,sizeof(sa));
+	sa.sin_family = AF_INET;//setting address family to IPv4
+	sa.sin_port = htons(theConfig.server_port);
+	sa.sin_addr.s_addr=INADDR_ANY;
+
+	// binding
+	int status= bind(sockfd,(struct sockaddr *) &sa, sizeof(sa));
+	check_err(status,"Error in binding");
+	/////////////////////////////////////////////////////////////
+
     // If new, initialize memory and Fill up Context For 1st Time
     if (is_new) {
         memset(ctx, 0, sizeof(Context));
@@ -164,32 +166,105 @@ setup:
 			LOG_TO(LogDestination::TERMINAL_ONLY,"Ongoing FileTransfer...\n\n");
 			serverAsReader(sockfd,ctx);
 		}
-	}
+	} // end of Active setup code
+
 	else{// This process is a Backup
 
 		LOG_TO(LogDestination::BOTH,"Waiting On Semaphore\n");
-		sem_wait(sem);  // Block until producer[switch] signals
 
-		if(ctx->choice == 'R'){
-			LOG_TO(LogDestination::BOTH,"Continuing Read RQ\n");
-			LOG_TO(LogDestination::TERMINAL_ONLY,"Ongoing FileTransfer...\n\n");
-			serverAsWriter(sockfd,ctx);
-		}
+		/// Setting up TCP socket and waiting for signal(mssg) from Switch
+			int sock = 0;
+			struct sockaddr_in serv_addr;
+			char buffer[1024] = {0};
 
-		else{
-			LOG_TO(LogDestination::BOTH,"Continuing Write RQ\n");
-			LOG_TO(LogDestination::TERMINAL_ONLY,"Ongoing FileTransfer...\n\n");
-			serverAsReader(sockfd,ctx);
-		}
+			// Create TCP socket
+			sock = socket(AF_INET, SOCK_STREAM, 0);
+			if (sock < 0) {
+				perror("TCP Socket creation error");
+				return -1;
+			}
 
-	}
+			serv_addr.sin_family = AF_INET;
+			serv_addr.sin_port = htons(theConfig.switch_port);
 
+			// Convert IPv4 address from text to binary form
+			if (inet_pton(AF_INET, theConfig.switch_ip.c_str(), &serv_addr.sin_addr) <= 0) {
+				perror("Invalid Switch address");
+				return -1;
+			}
+
+			// Connected to Switch
+			if (connect(sock, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0) {
+				perror("TCP Connection Failed");
+				return -1;
+			}
+
+        memset(buffer, 0, sizeof(buffer));
+        read(sock, buffer, 1024); // read from switch [Blocking Call]
+		close(sock);
+
+        std::string received(buffer);
+		if (received == "switch") {
+
+			if(ctx->choice == 'R'){
+				LOG_TO(LogDestination::BOTH,"Continuing Read RQ\n");
+				LOG_TO(LogDestination::TERMINAL_ONLY,"Ongoing FileTransfer...\n\n");
+				serverAsWriter(sockfd,ctx);
+			}
+
+			else{
+				LOG_TO(LogDestination::BOTH,"Continuing Write RQ\n");
+				LOG_TO(LogDestination::TERMINAL_ONLY,"Ongoing FileTransfer...\n\n");
+				serverAsReader(sockfd,ctx);
+			}
+        }
+
+	}// end of backup code
 
 	// Reach here => Single File Transfer complete
 	LOG_TO(LogDestination::TERMINAL_ONLY,"File Transfer Complete\n\n");
 	LOG_TO(LogDestination::BOTH,"Setting up server for Next File Transfer\n");
 	is_new = true; // setting up for Next File Transfer
-	goto setup;
+	close(sockfd);
+
+}// end of while inf
 
 	return 0;
+}
+
+bool readConfigFromFile(const std::string& filename, Config& config) {
+    std::ifstream file(filename);
+    if (!file.is_open()) {
+        std::cerr << "Error: Cannot open file " << filename << std::endl;
+        return false;
+    }
+
+    std::string line;
+
+    // Read server port
+    if (std::getline(file, line)) {
+        config.server_port = std::stoi(line);
+    } else {
+        std::cerr << "Error reading server port." << std::endl;
+        return false;
+    }
+
+    // Read switch IP
+    if (std::getline(file, line)) {
+        config.switch_ip = line;
+    } else {
+        std::cerr << "Error reading switch IP." << std::endl;
+        return false;
+    }
+
+    // Read switch port
+    if (std::getline(file, line)) {
+        config.switch_port = std::stoi(line);
+    } else {
+        std::cerr << "Error reading switch port." << std::endl;
+        return false;
+    }
+
+    file.close();
+    return true;
 }

@@ -8,7 +8,7 @@ File Transfer System with following components
 4. Client (UDP + Go-Back-N)
 
 Active and Backup maintains context for client in shared Memory <br>
-Backup runs only on getting signal from Switch else wait on semaphore <br>
+Backup runs only on getting signal from Switch else sleeps <br>
 Active and Backup share same codebase <br>
 Protocol header format similar to TFTP <br>
 Backup picks up file transfer from where active left using shared context <br>
@@ -17,7 +17,7 @@ Backup picks up file transfer from where active left using shared context <br>
 
 1. Support for only single client [multiple client undefined behaviour]
 2. Single point of failure (Switch emulator)
-3. Server and Switch has to be on same machine [as uses shared memory and semaphore]
+3. Active and Backup Server has to be on same machine [as uses shared memory] -using NFS and DSM(TreadMarks/Munin)
 
 
 ## How to BUILD CLI for all modules(Switch Server Client) :-
@@ -38,31 +38,28 @@ Backup picks up file transfer from where active left using shared context <br>
 
 ## HOW to Run All the modules(Switch Server Client) with Min Logging to Terminal->
 
-Both switch and client are using config.txt[ also have been provided in this repo as demo] <br>
-Change the config files to alter the behaviour and get results as u want
-
     As per this repo's example setup Follow the below order(top 2 bottom) strictly
-        1st Terminal cd inside Server run>  ./build/ser_exe 8000
-        2nd Terminal cd inside Server run>  ./build/ser_exe 8001
-        3rd Terminal cd inside Switch run>  ./build/sw_exe 9999 ./config.txt
+        1st Terminal cd inside Switch run>  ./build/sw_exe  ./config.txt
+        2nd Terminal cd inside Server run>  ./build/ser_exe ./config.txt
+        3rd Terminal cd inside Server run>  ./build/ser_exe ./config.txt
         4th Terminal cd inside Client run>  ./build/cli_exe ./config.txt # for Cli or,
         4th Terminal cd inside Client run>  ./build/ClientUI # for Gui
 
 ## How to Run All the modules(Switch Server Client) with Verbose Logging to File ->
 
     As per this repo's example setup Follow the below order(top 2 bottom) strictly
-        1st Terminal cd inside Server run>  LOG_ON_FILE=1 ./build/ser_exe 8000 V
-        2nd Terminal cd inside Server run>  LOG_ON_FILE=1 ./build/ser_exe 8001 V
-        3rd Terminal cd inside Switch run>  ./build/sw_exe 9999 ./config.txt
+        1st Terminal cd inside Switch run>  ./build/sw_exe  ./config.txt
+        2nd Terminal cd inside Server run>  LOG_ON_FILE=1 ./build/ser_exe ./config.txt V
+        3rd Terminal cd inside Server run>  LOG_ON_FILE=1 ./build/ser_exe ./config.txt V
         4th Terminal cd inside Client run>  LOG_ON_FILE=1 ./build/cli_exe ./config.txt V # for Cli or,
         4th Terminal cd inside Client run>  LOG_ON_FILE=1 ./build/ClientUI V # for Gui
 
 ## How to Run All the modules(Switch Server Client) with Verbose Logging to Terminal ->
 
     As per this repo's example setup Follow the below order(top 2 bottom) strictly
-        1st Terminal cd inside Server run>  ./build/ser_exe 8000 V
-        2nd Terminal cd inside Server run>  ./build/ser_exe 8001 V
-        3rd Terminal cd inside Switch run>  ./build/sw_exe 9999 ./config.txt
+        1st Terminal cd inside Switch run>  ./build/sw_exe  ./config.txt
+        2nd Terminal cd inside Server run>  ./build/ser_exe ./config.txt V
+        3rd Terminal cd inside Server run>  ./build/ser_exe ./config.txt V
         4th Terminal cd inside Client run>  ./build/cli_exe ./config.txt V # for Cli or,
         4th Terminal cd inside Client run>  ./build/ClientUI V # for Gui
 

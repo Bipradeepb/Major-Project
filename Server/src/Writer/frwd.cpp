@@ -73,7 +73,7 @@ void forwardThread(int sockfd, Context* ctx) {
         mtx.lock();
         auto blk = readFileBlock(ctx->fileName, ctx->current_blk , "octet");
         if(blk.second ==0){// Out of Bound File Access
-            LOG_TO(LogDestination::BOTH,"File Transfer Complete \n");
+            //LOG_TO(LogDestination::BOTH,"File Transfer Complete \n");
             mtx.unlock();
             break;
         }

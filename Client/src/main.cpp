@@ -1,12 +1,31 @@
+/*
 
-// how to use -->prithi@HP$ ./cli_exe <conFigFilePath> V //V is for verbose and is optional
-/* Config File Has the following Info [each in new Line]
-Server Ip eg 10.2.10.255
-Server Port eg 9999
-ServerWindowSize eg 5
-Choice eg R or W
-FilePath .
+Header Formats (Similar to TFTP)
+
+          2 bytes    string   1 byte    2 byte
+          ------------------------------------------
+   RRQ/  | 01/02 |  Filename  |   0  |  WindowSize |
+   WRQ    ------------------------------------------
+          2 bytes    2 bytes       n bytes
+          ---------------------------------
+   DATA  | 03    |   Block #  |    Data    |
+          ---------------------------------
+          2 bytes    2 bytes
+          -------------------
+   ACK   | 04    |   Block #  |
+          --------------------
+
+Note1:    The data field is from zero to 512 bytes long.  If it is 512 bytes
+   	  long, the block is not the last block of data; if it is from zero to
+   	  511 bytes long, it signals the end of the transfer.
+
+Note2:  a.A WRQ is acknowledged with an ACK packet having a block number of zero.
+	b.The WRQ and DATA packets are acknowledged by ACK or ERROR packets
+	c.The RRQ and ACK packets are acknowledged by  DATA  or ERROR packets.
+	d. All  packets other than duplicate ACK's and those used for termination are acknowledged unless a timeout occurs
+
 */
+
 #include "c_globals.hpp"
 #include "Logger.hpp"
 
@@ -51,7 +70,7 @@ bool readConfigFile(const std::string& fileName, Config& config) {
 
 int main(int argc, char* argv[]) {
     if (argc < 2) {
-        std::cout << "Contents of Config File :-\n";
+        std::cout << "Contents of Client Config File :-\n";
         std::cout << "The first Line has Switch Ip\n";
         std::cout << "The second Line has Switch Port\n";
         std::cout << "The third Line has R or W to symbolise read or write\n";

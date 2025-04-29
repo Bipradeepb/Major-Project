@@ -42,7 +42,14 @@ inline std::string server_list[2];//List of Load_Balancer
 inline std::mutex mtx_WorkQ, mtx_ServerList , mtx_wd;
 inline std::condition_variable cv_work;// Condition variable to notify tfrwd thread
 
-inline  sem_t* sem;
+inline int sw_port;
+
+///  for tcp connection of backup
+inline int server_fd, client_socket = -1;
+inline std::mutex mtx;
+inline std::condition_variable cv;
+inline bool allow_next_accept = false;
+
 /////////////////////////////// Helper Functions ////////////////////
 
 inline void check_err(int fd,std::string mssg){

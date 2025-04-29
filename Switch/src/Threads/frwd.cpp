@@ -49,7 +49,7 @@ void frwd_thread(int sockfd){
             if((watchDogCnt) > threshold){
                 switchFlag = true;
                 watchDogCnt =0; // once switch reset counter for new server
-                //std::cout<<"SWITCH OCCURS\n";
+                std::cout<<"SWITCHING  START\n";
             }
             mtx_wd.unlock();
 
@@ -74,8 +74,27 @@ void frwd_thread(int sockfd){
                 }
 
             }
-            std::cout<<"Signal Backup\n";
-            sem_post(sem);  // Signal the consumer[BackUp seerver]
+
+            /// send a mssg to backup over tcp
+
+                // Send messages
+                std::string msg = "switch";
+                send(client_socket, msg.c_str(), msg.length(), 0);
+
+                //Closing Current Connection
+                close(client_socket);
+
+                // making ready for next TCP connection[new backup]
+                {
+                    std::lock_guard<std::mutex> lock(mtx);
+                    // making ready for next TCP connection[new backup]
+                    client_socket = -1;
+                    // Signal accept_thread to accept a new connection
+                    allow_next_accept = true;
+                }
+                cv.notify_one();
+
+            std::cout<<"Signaled Backup - "<<curr_active<<"\nSWITCHING FINISHED\n";
         }
 
         delete thejob;

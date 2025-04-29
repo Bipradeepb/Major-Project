@@ -50,7 +50,6 @@ void  serverAsReader(int sockfd, Context* config) {
         int activity = select(sockfd + 1, &readfds, nullptr, nullptr, &timeout);
         if(activity < 0){
             LOG("Select Sys Call Failed inside clientAsReader\n");
-            close(sockfd);
             exit(1);
         }
         else if (activity == 0) { // Timeout, resend RRQ
@@ -77,7 +76,6 @@ void  serverAsReader(int sockfd, Context* config) {
             int activity = select(sockfd + 1, &readfds, nullptr, nullptr, &timeout);
             if(activity < 0){
                 LOG("Select Sys Call Failed inside clientAsReader\n");
-                close(sockfd);
                 exit(1);
             }
             else if (activity == 0) { // Timeout:- Waited for Data Pkt bt Not recv
@@ -151,9 +149,5 @@ void  serverAsReader(int sockfd, Context* config) {
             continue;
         }
     }
-
-    LOG_TO(LogDestination::BOTH,"Received Full File \n");
-    close(sockfd);
-
-
+    // reach here means full file transfer complete
 }
