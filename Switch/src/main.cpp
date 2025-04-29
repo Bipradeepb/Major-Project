@@ -1,7 +1,19 @@
 /*
-This is a switching emulator cum Watchdog for FTP service
+1. This is a switching emulator cum Watchdog for file transfer service
 
-Sits between Client Layer and server Layer
+2. Sits between Client Layer and server Layer
+
+3. Packet drop calc;
+    Let p - probablity for Each Packet drop
+    Let n - The number of packets/transsmission if p =0[no -drop]
+    For each dropped packet same packet is retransmitted and subject to drop
+    Then --->
+    Avg Num of Transmission for each packet untill sucess = 1/(1-p) [Mean of GP]
+    Total Num of Transmission for n unique packets = n/(1-p)
+    Total Num of Dropped packets or Extra packets sent = n*p/(1-p)
+    % Extra Sent Packets = 100*p/(1-p) [Expected Retransmission Overhead]
+    Ie for x% extra packets sent => p = x/(100+x)
+    --> let 25% xtra packets sents ==> x= 25 and p =0.2
 */
 #include "Globals.hpp"
 
@@ -19,6 +31,7 @@ int main(int argc, char **argv){
         std::cout << "The second Line has Active Server IP_PORT\n";
         std::cout << "The third Line has Back Server IP_PORT\n";
         std::cout << "The fourth line has  Switch Port\n";
+        std::cout << "The last line has Expected Retransmission Overhead Percentage(0-100)\n";
         printf("\nUsage $:- ./build/sw_exe ./config.txt\n");
         exit(1);
 	}
@@ -142,7 +155,7 @@ void load_configuration(const std::string& fileName) {
         throw std::runtime_error("Failed to read second server_list entry from file.");
     }
 
-	// Read the last line as Switch port
+	// Read the 4th line as Switch port
     std::string lastLine;
     if (!std::getline(file, lastLine)) {
         throw std::runtime_error("Failed to read switch port from file.");
@@ -154,5 +167,20 @@ void load_configuration(const std::string& fileName) {
         throw std::runtime_error("Switch port is not a valid integer.");
     }
 
+	// Read the 5th line as Expected Retransmission Overhead(0-100)
+    lastLine.clear();
+    if (!std::getline(file, lastLine)) {
+        throw std::runtime_error("Failed to read Expected Retransmission Overhead from file.");
+    }
+    int ero; //Expected Retransmission Overhead
+    try {
+        ero = std::stoi(lastLine);
+    } catch (const std::invalid_argument& e) {
+        throw std::runtime_error("Expected Retransmission Overhead is not a valid integer.");
+    }
+    packet_drop_prob = (ero*1.0)/((100 + ero)*1.0);
     file.close();
+
+    //debug
+    std::cout << "ERO = "<<ero<<" p = "<<packet_drop_prob<<" threshold = "<<threshold<<"\n";
 }

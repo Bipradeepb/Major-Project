@@ -19,12 +19,14 @@ Backup picks up file transfer from where active left using shared context <br>
 2. Single point of failure (Switch emulator)
 3. Active and Backup Server has to be on same machine [as uses shared memory] -using NFS and DSM(TreadMarks/Munin)
 
+## Setup for Development
+
+1. Latest g++ , make , cmake , Qt , Debian Based Distro
+2. U should first have the below setup <br>
+   ---> prtihijit@hp-250-g6:~$ ls go-back-n <br>
+   --------> Client  Server  Switch  ClientUI    pkg_debian  cleanUp Readme.md <br>
 
 ## How to BUILD CLI for all modules(Switch Server Client) :-
-
---> U should first have the below setup <br>
-    prtihijit@hp-250-g6:~$ ls go-back-n <br>
-    cleanUp  Client  Readme.md  Server  Switch <br>
 
     --> cd Client; make clean ; make -j${nproc} ; ./build/cli_exe # then enter to see how to use
     --> cd Server; make clean ; make -j${nproc} ; ./build/ser_exe # then enter to see how to use
@@ -32,9 +34,9 @@ Backup picks up file transfer from where active left using shared context <br>
 
 ## How to Build GUI ->ClientUI [exe generated inside Client build folder] by:- 
 
-     1. cd Client <br>
-     2. prtihijit@hp-250-g6:~/Desktop/go-back-n/Client$ cmake -S ../ClientUI/ -B ./build/ -DCMAKE_PREFIX_PATH=/home/prtihijit/Qt/6.9.0/gcc_64/lib/cmake <br>
-     3. prtihijit@hp-250-g6:~/Desktop/go-back-n/Client$ cmake --build ./build <br>
+     1. cd Client
+     2. prtihijit@hp-250-g6:~/Desktop/go-back-n/Client$ cmake -S ../ClientUI/ -B ./build/ -DCMAKE_PREFIX_PATH=/home/prtihijit/Qt/6.9.0/gcc_64/lib/cmake
+     3. prtihijit@hp-250-g6:~/Desktop/go-back-n/Client$ cmake --build ./build
 
 ## HOW to Run All the modules(Switch Server Client) with Min Logging to Terminal->
 
@@ -72,3 +74,8 @@ Unzip it --> tar -xzvf Go_Back_N_PB.tar.gz -C [path where u want to Download] <b
 ## Distribution of Software( - Using .deb package)
 
 Go to the ReadMe under pkg_debian folder for More details <br>
+
+## Special Notes
+
+1. All killing all the instances of Server Switch and Client run the ./cleanUp
+2. In case of >1 switching Restart the down server only after "Switching Finished" mmsg from Switch

@@ -43,6 +43,7 @@ inline std::mutex mtx_WorkQ, mtx_ServerList , mtx_wd;
 inline std::condition_variable cv_work;// Condition variable to notify tfrwd thread
 
 inline int sw_port;
+inline float packet_drop_prob = 0.0f;
 
 ///  for tcp connection of backup
 inline int server_fd, client_socket = -1;
