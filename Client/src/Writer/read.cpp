@@ -1,5 +1,6 @@
 #include "c_globals.hpp"
 #include "c_packets.hpp"
+#include "Logger.hpp"
 
 void readThread(int sockfd, const Config* ctx) {
     struct sockaddr_in clientAddr;
@@ -21,10 +22,9 @@ void readThread(int sockfd, const Config* ctx) {
         if (activity > 0) {
             unsigned char ack_buf[4];
             int recv_len = recvfrom(sockfd, ack_buf, sizeof(ack_buf), 0, (struct sockaddr*)&clientAddr, &addrLen);
-            // std::cout<<"Recv Something\n";
             if (recv_len > 0) {
                 ACK_Packet ack = extract_ack_packet(ack_buf);
-                std::cout<<"ACK recv with blk num = "<<ack.block_number<<"\n";
+                LOG("ACK recv with blk num = ",ack.block_number,"\n");
                 std::lock_guard<std::mutex> lock(mtx);
                 current_blk = ack.block_number; // Update current block
                 last_ack_blk = current_blk;
@@ -33,7 +33,7 @@ void readThread(int sockfd, const Config* ctx) {
         }
         // Timeout case for ACK
         else if (activity == 0) {
-            std::cout<<"Timeout For ACK\n";
+            LOG("Timeout For ACK\n");
             std::lock_guard<std::mutex> lock(mtx);
             current_blk = last_ack_blk; // Retransmit from last ACKed block
             flag_Ack_Recv= true;

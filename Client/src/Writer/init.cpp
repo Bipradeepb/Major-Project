@@ -1,14 +1,15 @@
 #include "c_globals.hpp"
 #include "c_packets.hpp"
+#include "Logger.hpp"
 
 void readThread(int sockfd, const Config* ctx);
 void forwardThread(int sockfd, const Config* ctx);
 
 void clientAsWriter(const Config& config){
-    
+
     // Setup UDP Socket
     int sockfd = socket(AF_INET, SOCK_DGRAM, 0);
-    check_err(sockfd, "Socket creation failed");   
+    check_err(sockfd, "Socket creation failed");
     struct sockaddr_in serverAddr{};
     serverAddr.sin_family = AF_INET;
     serverAddr.sin_port = htons(config.serverPort);
@@ -25,22 +26,22 @@ void clientAsWriter(const Config& config){
     unsigned char* rrq_packet = build_rrq_wrq_packet(config.filePath.c_str(), config.serverWindowSize, 2);
     while (true) {
         //Send Read Request
-        std::cout<<"Send WR packet\n";        
+        LOG_TO(LogDestination::TERMINAL_ONLY,"Send WR packet\n");
         sendto(sockfd, rrq_packet, strlen(config.filePath.c_str()) + 5, 0, (struct sockaddr*)&serverAddr, sizeof(serverAddr));
         //setup for timeout
         FD_ZERO(&readfds);
         FD_SET(sockfd, &readfds);
         timeout.tv_sec = TIMEOUT_SEC;
         timeout.tv_usec = 0;
-        
+
         int activity = select(sockfd + 1, &readfds, nullptr, nullptr, &timeout);
         if(activity < 0){
-            std::cout<<"Select Sys Call Failed inside clientAsWriter\n";
+            LOG("Select Sys Call Failed inside clientAsWriter\n");
             close(sockfd);
             exit(1);
         }
         else if (activity == 0) { // Timeout, resend WRQ
-            std::cout << "Timeout! Resending Write Request." << std::endl;
+            LOG("Timeout! Resending Write Request.\n");
             continue;
         }
         else{
@@ -52,7 +53,7 @@ void clientAsWriter(const Config& config){
     free(rrq_packet);
     bzero(buffer,BUFFER_SIZE);
     recvfrom(sockfd, buffer, BUFFER_SIZE, 0, (struct sockaddr*)&recvAddr, &recvAddrLen);
-    std::cout<<"Receveied ACK - 0\n";
+    LOG("Receveied ACK - 0\n");
 
 
     std::thread readThreadInstance(readThread, sockfd, &config);

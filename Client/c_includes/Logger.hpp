@@ -134,7 +134,7 @@ private:
 
         // Print to terminal (timestamp)
         if (shouldLogToTerminal) {
-            std::cout << timestamp_ss.str() << "      " << messageContent;
+            std::cout << timestamp_ss.str()<< "     " << messageContent;
             std::cout.flush();
         }
 

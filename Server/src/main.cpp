@@ -44,8 +44,18 @@ int main(int argc, char **argv){
 
 	// checking command line args
 	if (argc <2){
-		printf("Usage: ./build/ser_exe <ServerPort>\n");
+		printf("Usage To Enable Verbose Logging to file$	LOG_ON_FILE=1 ./build/ser_exe <ServerPort> V\n");
+		printf("Usage To Enable Verbose Logging to Terminal$	./build/ser_exe <ServerPort> V\n");
+		printf("Usage To Min Logging to Terminal$	./build/ser_exe <ServerPort>\n");
 		exit(1);
+	}
+	if(argc ==3){// checking for verbose logging
+		if(std::string(argv[2])== "V"){
+			LOG_Verbose = true;
+		}
+	}
+	else if(argc == 2){
+		LOG_Verbose = false;
 	}
 
     // Try to create the semaphore, if already exists just open it
@@ -145,13 +155,13 @@ setup:
 		if(buffer[1]==1){ // Read Packet recv
 			ctx->choice='R';
 			LOG_TO(LogDestination::BOTH,"Recv Read RQ\n");
-			LOG_TO(LogDestination::TERMINAL_ONLY,"\n\n..Ongoing FileTransfer...\n\n");
+			LOG_TO(LogDestination::TERMINAL_ONLY,"Ongoing FileTransfer...\n\n");
 			serverAsWriter(sockfd,ctx);
 		}
 		else{ // Write Packet recv
 			ctx->choice='W';
 			LOG_TO(LogDestination::BOTH,"Recv Write RQ\n");
-			LOG_TO(LogDestination::TERMINAL_ONLY,"\n\n..Ongoing FileTransfer...\n\n");
+			LOG_TO(LogDestination::TERMINAL_ONLY,"Ongoing FileTransfer...\n\n");
 			serverAsReader(sockfd,ctx);
 		}
 	}
@@ -162,13 +172,13 @@ setup:
 
 		if(ctx->choice == 'R'){
 			LOG_TO(LogDestination::BOTH,"Continuing Read RQ\n");
-			LOG_TO(LogDestination::TERMINAL_ONLY,"\n\n..Ongoing FileTransfer...\n\n");
+			LOG_TO(LogDestination::TERMINAL_ONLY,"Ongoing FileTransfer...\n\n");
 			serverAsWriter(sockfd,ctx);
 		}
 
 		else{
 			LOG_TO(LogDestination::BOTH,"Continuing Write RQ\n");
-			LOG_TO(LogDestination::TERMINAL_ONLY,"\n\n..Ongoing FileTransfer...\n\n");
+			LOG_TO(LogDestination::TERMINAL_ONLY,"Ongoing FileTransfer...\n\n");
 			serverAsReader(sockfd,ctx);
 		}
 
@@ -176,6 +186,7 @@ setup:
 
 
 	// Reach here => Single File Transfer complete
+	LOG_TO(LogDestination::TERMINAL_ONLY,"File Transfer Complete\n\n");
 	LOG_TO(LogDestination::BOTH,"Setting up server for Next File Transfer\n");
 	is_new = true; // setting up for Next File Transfer
 	goto setup;

@@ -28,7 +28,7 @@ void reader_thread(int sockfd){
         sender_key = std::string(sender_ip) + "_" + std::to_string(sender_port);
 
         //debug::
-        std::cout<<" Just received a packet from "<<sender_key<<" and start decoding his packet\n";
+        //std::cout<<" Just received a packet from "<<sender_key<<" and start decoding his packet\n";
 
         // selecting Active Server
         mtx_ServerList.lock();
@@ -55,7 +55,7 @@ void reader_thread(int sockfd){
                 std::lock_guard<std::mutex> lock2(mtx_WorkQ);
                 WorkQ.push_back(thejob);
             }
-            std::cout<<"Mssg recv from Active server | Job created and Push to WorkQ\n";
+            //std::cout<<"Mssg recv from Active server | Job created and Push to WorkQ\n";
 
         }
         else{// recv mssg is from client
@@ -75,7 +75,7 @@ void reader_thread(int sockfd){
                 std::lock_guard<std::mutex> lock2(mtx_WorkQ);
                 WorkQ.push_back(thejob);
             }
-            std::cout<<"Mssg recv from client | Job created and Push to WorkQ\n";
+            //std::cout<<"Mssg recv from client | Job created and Push to WorkQ\n";
         }
 
         cv_work.notify_one(); // notifies the frwd thread that WorQ has data

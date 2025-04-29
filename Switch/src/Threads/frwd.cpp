@@ -17,7 +17,7 @@ void frwd_thread(int sockfd){
         }
 
         //debug lines
-        std::cout<<"Inside Frwd Thread After Extract Job\n";
+        //std::cout<<"Inside Frwd Thread After Extract Job\n";
         //thejob->display_job();
 
         // Parse the IP and port from the client key
@@ -35,21 +35,21 @@ void frwd_thread(int sockfd){
         ssize_t sent_bytes = sendto(sockfd, thejob->packet, thejob->packet_size, 0, (const struct sockaddr*)&client_addr, sizeof(client_addr));
         check_err(sent_bytes,"sendto failed");
         free(thejob->packet);
-        std::cout<<"Packet Sent to "<<thejob->destn<<"\n";
+        //std::cout<<"Packet Sent to "<<thejob->destn<<"\n";
 
         //WatchDog - HeartBeat Check
         bool switchFlag = false;
         if(thejob->destn_type == 'S'){
 
-            //std::cout<< " Try to Aquire context lock\n";
+            ////std::cout<< " Try to Aquire context lock\n";
 
             mtx_wd.lock();
-            std::cout<<"Checking For Switch wdCnt = "<<watchDogCnt<<"\n";
+            //std::cout<<"Checking For Switch wdCnt = "<<watchDogCnt<<"\n";
             watchDogCnt++;// means server is still on if > threshold ==> server off
             if((watchDogCnt) > threshold){
                 switchFlag = true;
                 watchDogCnt =0; // once switch reset counter for new server
-                std::cout<<"SWITCH OCCURS\n";
+                //std::cout<<"SWITCH OCCURS\n";
             }
             mtx_wd.unlock();
 
@@ -58,7 +58,7 @@ void frwd_thread(int sockfd){
         if(switchFlag){ // switching active and backup servers
             std::string curr_active;
             mtx_ServerList.lock();
-            std::cout<<"Swapping Done \n";
+            //std::cout<<"Swapping Done \n";
             std::swap(server_list[0],server_list[1]);
             curr_active = server_list[0];
             mtx_ServerList.unlock();
@@ -66,7 +66,7 @@ void frwd_thread(int sockfd){
             // traverse through the WorkQ and update the destn for type ="S"
             {
                 std::lock_guard<std::mutex> lock2(mtx_WorkQ);
-                std::cout<<"Changing Address of server to backup in WorkQ \n";
+                //std::cout<<"Changing Address of server to backup in WorkQ \n";
                 for(auto &el : WorkQ){
                     if(el->destn_type=='S'){
                         el->destn = curr_active;

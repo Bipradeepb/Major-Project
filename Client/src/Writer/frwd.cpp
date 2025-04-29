@@ -1,5 +1,6 @@
 #include "c_globals.hpp"
 #include "c_packets.hpp"
+#include "Logger.hpp"
 
 std::pair<unsigned char*,size_t> readFileBlock(const std::string& fileName, int block_num, const std::string& mode) {
     // Determine the file opening mode based on the input "mode"
@@ -11,8 +12,6 @@ std::pair<unsigned char*,size_t> readFileBlock(const std::string& fileName, int 
         std::cerr << "Error opening file: " << fileName << std::endl;
         return {nullptr,0};
     }
-
-    //std::cout<<"File size is "<<ftell(file) << " fileMode "<<fileMode<<" fileName = "<< fileName.c_str()<<"\n";
 
     // Calculate the offset and seek to that position in the file
     long offset = block_num * 512;
@@ -29,8 +28,8 @@ std::pair<unsigned char*,size_t> readFileBlock(const std::string& fileName, int 
 
     if (currentPos >= fileSize) {
         //std::cerr<<"currentPos = "<<currentPos<<" file Size = "<<fileSize<<"\n";
-        std::cerr << "Attempted to read beyond the end of file." << std::endl;
-        //std::cerr << "fileName = "<<fileName <<" block_num = "<<block_num<<" mode = "<<mode<<std::endl;
+        LOG("Attempted to read beyond the end of file.\n");
+        //LOG("fileName = "<<fileName <<" block_num = "<<block_num<<" mode = "<<mode<<std::endl;
         fclose(file);
         return {nullptr,0};
     }
@@ -45,7 +44,7 @@ std::pair<unsigned char*,size_t> readFileBlock(const std::string& fileName, int 
     // Read 512 bytes into buffer
     size_t bytesRead = fread(buffer, sizeof(unsigned char), 512, file);
     if (bytesRead != 512) {
-        std::cerr << "Note: Could not read full 512 bytes, read " << bytesRead << " bytes." << std::endl;
+        LOG("Note: Could not read full 512 bytes, read " ,bytesRead ," bytes.\n");
     }
 
     // Close the file
@@ -72,11 +71,11 @@ void forwardThread(int sockfd, const Config* ctx){
         mtx.lock();
         auto blk = readFileBlock(ctx->filePath, current_blk , "octet");
         if(blk.second ==0){// Out of Bound File Access
-            std::cout<<"File Transfer Complete \n";
+            LOG_TO(LogDestination::TERMINAL_ONLY,"File Transfer Complete \n");
             mtx.unlock();
             break;
         }
-        std::cout<<"Building Data Packet for blk = "<<current_blk<<"\n";
+        LOG("Building Data Packet for blk = ",current_blk,"\n");
         u_char * packet = build_data_packet(current_blk,blk.first,blk.second);
         sendto(sockfd, packet, blk.second + 4, 0, (struct sockaddr*)&clientAddr, sizeof(clientAddr));
         current_blk ++;
@@ -91,7 +90,7 @@ void forwardThread(int sockfd, const Config* ctx){
 
             // mtx.lock();
             if(flag_Ack_Recv){
-                std::cout<<"Updated [After recv ACK ]current_blk = "<<current_blk<<"\n";
+                LOG("Updated [After recv ACK ]current_blk = ",current_blk,"\n");
                 flag_Ack_Recv = false;
                 limit = current_blk + ctx->serverWindowSize -1; // New Limit [current_blk is updated in ReadThread]
             }
@@ -115,7 +114,7 @@ void forwardThread(int sockfd, const Config* ctx){
     }// Loop Back to transmit Next Window
 
     // Reach Here ==> Full File Transfer Complete
-    std::cout<<"Closing Socket and Exiting\n";
+    LOG_TO(LogDestination::TERMINAL_ONLY,"Closing Socket and Exiting\n");
     close(sockfd);
     exit(0);//terminate program
 }

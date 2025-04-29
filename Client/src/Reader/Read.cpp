@@ -1,5 +1,6 @@
 #include "c_globals.hpp"
 #include "c_packets.hpp"
+#include "Logger.hpp"
 
 void writeFileBlock(const std::string& fileName,const std::string& data , int data_size){
     const char* fileMode = "ab";  // "ab" for append binary, "a" for append text
@@ -43,7 +44,7 @@ void clientAsReader(const Config& config) {
     unsigned char* rrq_packet = build_rrq_wrq_packet(config.filePath.c_str(), config.serverWindowSize, 1);
     while (true) {
         //Send Read Request
-        std::cout<<"Send RD packet\n";
+        LOG_TO(LogDestination::TERMINAL_ONLY,"Send RD packet\n");
         sendto(sockfd, rrq_packet, strlen(config.filePath.c_str()) + 5, 0, (struct sockaddr*)&serverAddr, sizeof(serverAddr));
         //setup for timeout
         FD_ZERO(&readfds);
@@ -53,12 +54,12 @@ void clientAsReader(const Config& config) {
 
         int activity = select(sockfd + 1, &readfds, nullptr, nullptr, &timeout);
         if(activity < 0){
-            std::cout<<"Select Sys Call Failed inside clientAsReader\n";
+            LOG("Select Sys Call Failed inside clientAsReader\n");
             close(sockfd);
             exit(1);
         }
         else if (activity == 0) { // Timeout, resend RRQ
-            std::cout << "Timeout! Resending Read Request." << std::endl;
+            LOG("Timeout! Resending Read Request.\n");
             continue;
         }
         else{
@@ -80,12 +81,12 @@ void clientAsReader(const Config& config) {
 
             int activity = select(sockfd + 1, &readfds, nullptr, nullptr, &timeout);
             if(activity < 0){
-                std::cout<<"Select Sys Call Failed inside clientAsReader\n";
+                LOG("Select Sys Call Failed inside clientAsReader\n");
                 close(sockfd);
                 exit(1);
             }
             else if (activity == 0) { // Timeout:- Waited for Data Pkt bt Not recv
-                std::cout<<"Timeout For Expected Blk Num "<<expect_blk_num<<"\n";
+                LOG("Timeout For Expected Blk Num ",expect_blk_num,"\n");
                 unsigned char* ack_packet = build_ack_packet(expect_blk_num);
                 sendto(sockfd, ack_packet, 4, 0, (struct sockaddr*)&serverAddr, sizeof(serverAddr));
                 free(ack_packet);
@@ -101,7 +102,7 @@ void clientAsReader(const Config& config) {
         if (buffer[1] == 3) { // Data packet
             DATA_Packet data_pkt = extract_data_packet(buffer, recv_len);
 
-            std::cout<<"Expected Blk Num "<<expect_blk_num<<" Recv Blk Num "<<data_pkt.block_number<<"\n";
+            LOG("Expected Blk Num ",expect_blk_num," Recv Blk Num ",data_pkt.block_number,"\n");
 
             if (data_pkt.block_number == expect_blk_num) {
                 writeFileBlock(config.filePath,data_pkt.data, data_pkt.data_size);
@@ -109,7 +110,7 @@ void clientAsReader(const Config& config) {
                 curr_Win--;
             }
             else{//data_pkt.block_number > expect_blk_num  or data_pkt.block_number < expect_blk_num
-                std::cout<<"Sending ACK with blk = "<<expect_blk_num<<"\n";
+                LOG("Sending ACK with blk = ",expect_blk_num,"\n");
                 unsigned char* ack_packet = build_ack_packet(expect_blk_num);
                 sendto(sockfd, ack_packet, 4, 0, (struct sockaddr*)&serverAddr, sizeof(serverAddr));
                 free(ack_packet);
@@ -117,7 +118,7 @@ void clientAsReader(const Config& config) {
             }
 
             if(curr_Win == 0){
-                std::cout<<"Full Win Recv :- Sending ACK with blk = "<<expect_blk_num<<"\n";
+                LOG("Full Win Recv :- Sending ACK with blk = ",expect_blk_num,"\n");
                 unsigned char* ack_packet = build_ack_packet(expect_blk_num);
                 sendto(sockfd, ack_packet, 4, 0, (struct sockaddr*)&serverAddr, sizeof(serverAddr));
                 free(ack_packet);
@@ -133,7 +134,7 @@ void clientAsReader(const Config& config) {
     //Handle Last Packet Recv:-
      while (true) {
         //Send Final ACK
-        std::cout<<"Sending FInal ACK with blk = "<<expect_blk_num<<"\n";
+        LOG("Sending FInal ACK with blk = ",expect_blk_num,"\n");
         unsigned char* ack_packet = build_ack_packet(expect_blk_num);
         sendto(sockfd, ack_packet, 4, 0, (struct sockaddr*)&serverAddr, sizeof(serverAddr));
         free(ack_packet);
@@ -156,6 +157,6 @@ void clientAsReader(const Config& config) {
         }
     }
 
-    std::cout<< "Received Full File \n";
+    LOG_TO(LogDestination::TERMINAL_ONLY, "Received Full File \n");
     close(sockfd);
 }
