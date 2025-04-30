@@ -170,7 +170,7 @@ while(1){
 
 	else{// This process is a Backup
 
-		LOG_TO(LogDestination::BOTH,"Waiting On Semaphore\n");
+		LOG_TO(LogDestination::BOTH,"Waiting For Switch Signal\n");
 
 		/// Setting up TCP socket and waiting for signal(mssg) from Switch
 			int sock = 0;

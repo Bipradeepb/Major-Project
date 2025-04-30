@@ -1,9 +1,9 @@
 #!/bin/bash
 ################## This scripts rebuilds the debian pkg ####################
 # Base source and destination directories
-SRC_BASE=~/Desktop/go-back-n
-DEST_BASE=/home/prtihijit/Desktop/go-back-n/pkg_debian/udp-ft-suite/opt/gobackn
-PKG_DIR=/home/prtihijit/Desktop/go-back-n/pkg_debian
+SRC_BASE=~/Desktop/Major-Project/go-back-n
+DEST_BASE=/home/prtihijit/Desktop/Major-Project/go-back-n/pkg_debian/udp-ft-suite/opt/gobackn
+PKG_DIR=/home/prtihijit/Desktop/Major-Project/go-back-n/pkg_debian
 PKG_NAME=udp-ft-suite
 
 # Iterate through each directory in the source base

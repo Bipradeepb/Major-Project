@@ -17,8 +17,8 @@ void frwd_thread(int sockfd){
         }
 
         //debug lines
-        //std::cout<<"Inside Frwd Thread After Extract Job\n";
-        //thejob->display_job();
+        LOG("Inside Frwd Thread After Extract Job\n");
+        thejob->display_job();
 
         // Parse the IP and port from the client key
         size_t pos = thejob->destn.find('_');
@@ -35,7 +35,7 @@ void frwd_thread(int sockfd){
         ssize_t sent_bytes = sendto(sockfd, thejob->packet, thejob->packet_size, 0, (const struct sockaddr*)&client_addr, sizeof(client_addr));
         check_err(sent_bytes,"sendto failed");
         free(thejob->packet);
-        //std::cout<<"Packet Sent to "<<thejob->destn<<"\n";
+        LOG("Packet Sent to ",thejob->destn,"\n");
 
         //WatchDog - HeartBeat Check
         bool switchFlag = false;
@@ -44,12 +44,12 @@ void frwd_thread(int sockfd){
             ////std::cout<< " Try to Aquire context lock\n";
 
             mtx_wd.lock();
-            //std::cout<<"Checking For Switch wdCnt = "<<watchDogCnt<<"\n";
+            LOG("Checking For Switch wdCnt = ",watchDogCnt,"\n");
             watchDogCnt++;// means server is still on if > threshold ==> server off
             if((watchDogCnt) > threshold){
                 switchFlag = true;
                 watchDogCnt =0; // once switch reset counter for new server
-                std::cout<<"SWITCHING  START\n";
+                LOG_TO(LogDestination::TERMINAL_ONLY,"SWITCHING  START\n");
             }
             mtx_wd.unlock();
 
@@ -94,7 +94,7 @@ void frwd_thread(int sockfd){
                 }
                 cv.notify_one();
 
-            std::cout<<"Signaled Backup - "<<curr_active<<"\nSWITCHING FINISHED\n";
+            LOG_TO(LogDestination::TERMINAL_ONLY,"Signaled Backup - ",curr_active,"\nSWITCHING FINISHED\n");
         }
 
         delete thejob;

@@ -23,9 +23,7 @@ DATA_Packet extract_data_packet(const unsigned char* packet, int packet_size) {
     DATA_Packet data_packet;
     data_packet.block_number = (packet[2] << 8) | packet[3];
     data_packet.data_size = packet_size - 4; // Exclude opcode and block number bytes
-    data_packet.data = (char*)malloc(data_packet.data_size);
+    data_packet.data = (u_char*)malloc(data_packet.data_size);
     memcpy(data_packet.data, packet + 4, data_packet.data_size);
     return data_packet;
 }
-
-

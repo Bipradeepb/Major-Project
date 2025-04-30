@@ -9,32 +9,40 @@
 ## Norms of Usage :-
 
 1. Ensure /opt/gobackn exists with Server Switch Client folders [exe present under build folder]
-2. Logs of Server will appear under Server/Logs [Note same file is reused]
+2. Note same Log file is reused
 3. Keep the files used for Transfering Under Server/Demo and Client/Demo
-4. Use config.txt under Client and Switch To set configurations of the whole suite
+4. Use config.txt under Client and Switch and Server To set configurations of the whole suite
 5. Do not touch the lib folder [used by GUI]
 6. While reading a file ensure a file of same name is not present [else corrupt]
-7. Ctrl + C Switch or run /opt/gobackn/runCleanUp [to clear Up Shared Mem & Semaphore] 
+7. Run /opt/gobackn/runCleanUp [to clear Up Shared Mem & Semaphore] 
 
-## Without Using Logger (on Server Side) and GUI (on Client side)
 
-1. cd /opt/gobackn
-
-2. As per example setup Follow the below order(top 2 bottom) strictly <br>
-
-        1st Terminal cd inside Server run>  ./build/runServer 8000
-        2nd Terminal cd inside Server run>  ./build/runServer 8001
-        3rd Terminal cd inside Switch run>  ./build/runSwitch 9999 ./config.txt
-        4th Terminal cd inside Client run>  ./build/runCLI ./config.txt
-
-## With Using Logger (on Server Side) and GUI (on Client side)
+## HOW to Run All the modules(Switch Server Client) with Min Logging to Terminal->
 
 1. cd /opt/gobackn
+2. As per this repo's example setup Follow the below order(top 2 bottom) strictly
+        1st Terminal cd inside Switch run>  ./build/runSwitch  ./config.txt
+        2nd Terminal cd inside Server run>  ./build/runServer ./config.txt
+        3rd Terminal cd inside Server run>  ./build/runServer ./config.txt
+        4th Terminal cd inside Client run>  ./build/runCLI ./config.txt # for Cli or,
+        4th Terminal cd inside Client run>  ./build/runGUI # for Gui
 
-2. As per this repo's example setup Follow the below order(top 2 bottom) strictly <br>
+## How to Run All the modules(Switch Server Client) with Verbose Logging to File ->
 
-        1st Terminal cd inside Server run>  LOG_ON=1 ./build/runServer 8000 # to generate Log Files under Server/Logs
-        Or , 1st Terminal cd inside Server run>  ./build/runServer 8000 # Not generate Log Files 
-        2nd Terminal cd inside Server run>  LOG_ON=1 ./build/runServer 8001
-        3rd Terminal cd inside Switch run>  ./build/runSwitch 9999 ./config.txt
-        4th Terminal cd inside Client run>  ./build/runGUI  #launches the GUI
+1. cd /opt/gobackn
+2. As per this repo's example setup Follow the below order(top 2 bottom) strictly
+        1st Terminal cd inside Switch run>  LOG_ON_FILE=1 ./build/runSwitch  ./config.txt V
+        2nd Terminal cd inside Server run>  LOG_ON_FILE=1 ./build/runServer ./config.txt V
+        3rd Terminal cd inside Server run>  LOG_ON_FILE=1 ./build/runServer ./config.txt V
+        4th Terminal cd inside Client run>  LOG_ON_FILE=1 ./build/runCLI ./config.txt V # for Cli or,
+        4th Terminal cd inside Client run>  LOG_ON_FILE=1 ./build/runGUI V # for Gui
+
+## How to Run All the modules(Switch Server Client) with Verbose Logging to Terminal ->
+
+1. cd /opt/gobackn
+2. As per this repo's example setup Follow the below order(top 2 bottom) strictly
+        1st Terminal cd inside Switch run>  ./build/runSwitch  ./config.txt V
+        2nd Terminal cd inside Server run>  ./build/runServer ./config.txt V
+        3rd Terminal cd inside Server run>  ./build/runServer ./config.txt V
+        4th Terminal cd inside Client run>  ./build/runCLI ./config.txt V # for Cli or,
+        4th Terminal cd inside Client run>  ./build/runGUI V # for Gui

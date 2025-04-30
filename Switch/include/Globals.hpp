@@ -1,7 +1,7 @@
 #pragma once
 
 #include "std_headers.h"
-
+#include "Logger.hpp"
 
 ////////////////////////////////////////// contents of Worker Queue
 
@@ -10,19 +10,16 @@ public:
 
     char destn_type; // S for server | C for client
     std::string destn; // Ip+"_"+Port
-    char * packet;// std-tftp packet
+    u_char * packet;//go-back-n packet
     int packet_size;
 
     void display_job(){
-        std::cout<<"dest_type = "<<destn_type<<"\n";
-        std::cout<<"destn = "<<destn<<"\n";
+        LOG("dest_type = ",destn_type,"\n");
+        LOG("destn = ",destn,"\n");
         // Output the resulting string in hex for verification
-        std::cout<<"Packet in hex form \n";
-        for (int i =0;i<packet_size;++i) {
-            printf("%02X ", packet[i]);
-        }
-        std::cout << "\n";
-        std::cout<<"packet_size = "<<packet_size<<"\n";
+        LOG("1st 4 bytes of Packet in hex form \n");
+        LOG((uint)packet[0]," ",(uint)packet[1]," ",(uint)packet[2]," ",(uint)packet[3],"\n");
+        LOG("packet_size = ",packet_size,"\n");
     }
     ~job(){;} // to prevent free the dynamic memory by default destructor
 };

@@ -12,7 +12,7 @@ public:
 class DATA_Packet{
 public:
     int block_number;
-    char* data;
+    u_char* data;
     int data_size;
 } ;
 

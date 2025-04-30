@@ -50,7 +50,7 @@ Backup picks up file transfer from where active left using shared context <br>
 ## How to Run All the modules(Switch Server Client) with Verbose Logging to File ->
 
     As per this repo's example setup Follow the below order(top 2 bottom) strictly
-        1st Terminal cd inside Switch run>  ./build/sw_exe  ./config.txt
+        1st Terminal cd inside Switch run>  LOG_ON_FILE=1 ./build/sw_exe  ./config.txt V
         2nd Terminal cd inside Server run>  LOG_ON_FILE=1 ./build/ser_exe ./config.txt V
         3rd Terminal cd inside Server run>  LOG_ON_FILE=1 ./build/ser_exe ./config.txt V
         4th Terminal cd inside Client run>  LOG_ON_FILE=1 ./build/cli_exe ./config.txt V # for Cli or,
@@ -59,7 +59,7 @@ Backup picks up file transfer from where active left using shared context <br>
 ## How to Run All the modules(Switch Server Client) with Verbose Logging to Terminal ->
 
     As per this repo's example setup Follow the below order(top 2 bottom) strictly
-        1st Terminal cd inside Switch run>  ./build/sw_exe  ./config.txt
+        1st Terminal cd inside Switch run>  ./build/sw_exe  ./config.txt V
         2nd Terminal cd inside Server run>  ./build/ser_exe ./config.txt V
         3rd Terminal cd inside Server run>  ./build/ser_exe ./config.txt V
         4th Terminal cd inside Client run>  ./build/cli_exe ./config.txt V # for Cli or,

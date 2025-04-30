@@ -82,6 +82,13 @@ void forwardThread(int sockfd, Context* ctx) {
         sendto(sockfd, packet, blk.second + 4, 0, (struct sockaddr*)&clientAddr, sizeof(clientAddr));
         ctx->current_blk ++;
 
+        // //debug
+        // LOG("Data packet sent (read from file)\n")
+        // for (int i =0;i<blk.second + 4;++i) {
+        //     std::cout<<(uint)packet[i]<<" ";
+        // }
+        // LOG("\n");
+
         //free resource
         free(packet);
         delete [] (blk.first);

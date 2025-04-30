@@ -2,7 +2,7 @@
 #include "c_packets.hpp"
 #include "Logger.hpp"
 
-void writeFileBlock(const std::string& fileName,const std::string& data , int data_size){
+void writeFileBlock(const std::string& fileName,const u_char* data , int data_size){
     const char* fileMode = "ab";  // "ab" for append binary, "a" for append text
 
     // Open the file in the specified mode
@@ -13,7 +13,7 @@ void writeFileBlock(const std::string& fileName,const std::string& data , int da
     }
 
     //writing to file
-    fwrite(data.c_str(), sizeof(unsigned char), data_size, file);
+    fwrite(data, sizeof(unsigned char), data_size, file);
 
     // Close the file
     fclose(file);
@@ -108,6 +108,14 @@ void clientAsReader(const Config& config) {
                 writeFileBlock(config.filePath,data_pkt.data, data_pkt.data_size);
                 expect_blk_num++;
                 curr_Win--;
+
+                // //debug
+                // LOG("Data packet recv (write to file)\n")
+                // for (int i =0;i<data_pkt.data_size;++i) {
+                //     std::cout<<(uint)data_pkt.data[i]<<" ";
+                // }
+                // LOG("\n");
+
             }
             else{//data_pkt.block_number > expect_blk_num  or data_pkt.block_number < expect_blk_num
                 LOG("Sending ACK with blk = ",expect_blk_num,"\n");

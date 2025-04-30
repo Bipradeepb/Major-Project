@@ -2,7 +2,7 @@
 #include "packets.hpp"
 #include "Logger.hpp"
 
-void writeFileBlock(const std::string& fileName,const std::string& data , int data_size){
+void writeFileBlock(const std::string& fileName,const u_char* data , int data_size){
     const char* fileMode = "ab";  // "ab" for append binary, "a" for append text
 
     // Open the file in the specified mode
@@ -13,7 +13,7 @@ void writeFileBlock(const std::string& fileName,const std::string& data , int da
     }
 
     //writing to file
-    fwrite(data.c_str(), sizeof(unsigned char), data_size, file);
+    fwrite(data, sizeof(unsigned char), data_size, file);
 
     // Close the file
     fclose(file);

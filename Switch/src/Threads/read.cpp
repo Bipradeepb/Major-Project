@@ -1,4 +1,5 @@
 #include "Globals.hpp"
+#include "Logger.hpp"
 
 void reader_thread(int sockfd){
 
@@ -43,20 +44,20 @@ void reader_thread(int sockfd){
 
             mtx_wd.lock();
             watchDogCnt=0;
+            LOG("After Reset WD cnt = ",watchDogCnt,"\n");
             mtx_wd.unlock();
 
-            //std::cout<<"Reset WD cnt\n";
             // Decide whether to drop packet or NOT [just like epsilon-greedy]
             if(buffer[1]==3){ // data packet
                 float r = dis(gen); // Generate [0.0, 1.0) from uniform distribution
-                //total++;
+                total++;
                 if (r < packet_drop_prob){ // Drop current data Packet
-                    // dropped++;
-                    // if (total % 1 == 0) {
-                    //     //std::cout << "[DEBUG] Drop Rate: " << (100.0 * dropped / total) << "%\n";
-                    //     //std::cout <<"[DEBUG] total = "<<total<<" dropped = "<<dropped<<"\n";
-                    //     //std::cout << "Server data packet dropped\n";
-                    // }
+                    dropped++;
+                    if (total % 1 == 0) {
+                        LOG( "[DEBUG] Drop Rate: " , (100.0 * dropped / total) , "%\n");
+                        LOG("[DEBUG] total = ",total," dropped = ",dropped,"\n");
+                        LOG( "Server data packet dropped\n");
+                    }
                     continue;
                 }
             }
@@ -67,7 +68,7 @@ void reader_thread(int sockfd){
             thejob->destn_type = 'C';
             thejob->destn = the_actual_client_key;
             thejob->packet_size = received_bytes;
-            thejob->packet = (char *)malloc(thejob->packet_size);
+            thejob->packet = (u_char *)malloc(thejob->packet_size);
             memcpy((void *)thejob->packet, buffer, thejob->packet_size);
 
 
@@ -76,7 +77,7 @@ void reader_thread(int sockfd){
                 std::lock_guard<std::mutex> lock2(mtx_WorkQ);
                 WorkQ.push_back(thejob);
             }
-            ////std::cout<<"Mssg recv from Active server | Job created and Push to WorkQ\n";
+            LOG("Mssg recv from Active server | Job created and Push to WorkQ\n");
 
         }
         else if(sender_key != curr_backup){// recv mssg is from client
@@ -86,14 +87,14 @@ void reader_thread(int sockfd){
             // Decide whether to drop packet or NOT [just like epsilon-greedy]
             if(buffer[1]==3){ // data packet
                 float r = dis(gen); // Generate [0.0, 1.0) from uniform distribution
-                //total++;
+                total++;
                 if (r < packet_drop_prob){ // Drop current data Packet
-                    // dropped++;
-                    // if (total % 1 == 0) {
-                    //     //std::cout << "[DEBUG] Drop Rate: " << (100.0 * dropped / total) << "%\n";
-                    //     //std::cout <<"[DEBUG] total = "<<total<<" dropped = "<<dropped<<"\n";
-                    //     //std::cout <<"Client Data packet drop\n";
-                    // }
+                    dropped++;
+                    if (total % 1 == 0) {
+                        LOG( "[DEBUG] Drop Rate: " , (100.0 * dropped / (total-dropped)) , "%\n");
+                        LOG("[DEBUG] total = ",total," dropped = ",dropped,"\n");
+                        LOG( "Client data packet dropped\n");
+                    }
                     continue;
                 }
             }
@@ -103,7 +104,7 @@ void reader_thread(int sockfd){
             thejob->destn_type = 'S';
             thejob->destn = curr_active;
             thejob->packet_size = received_bytes;
-            thejob->packet = (char *)malloc(thejob->packet_size);
+            thejob->packet = (u_char *)malloc(thejob->packet_size);
             memcpy((void *)thejob->packet, buffer, thejob->packet_size);
 
             //push job to WorkQ
@@ -111,7 +112,7 @@ void reader_thread(int sockfd){
                 std::lock_guard<std::mutex> lock2(mtx_WorkQ);
                 WorkQ.push_back(thejob);
             }
-            ////std::cout<<"Mssg recv from client | Job created and Push to WorkQ\n";
+            LOG("Mssg recv from client | Job created and Push to WorkQ\n");
         }
 
         cv_work.notify_one(); // notifies the frwd thread that WorQ has data

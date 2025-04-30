@@ -16,6 +16,7 @@
     --> let 25% xtra packets sents ==> x= 25 and p =0.2
 */
 #include "Globals.hpp"
+#include "Logger.hpp"
 
 void reader_thread(int sockfd);
 void frwd_thread(int sockfd);
@@ -32,10 +33,19 @@ int main(int argc, char **argv){
         std::cout << "The third Line has Back Server IP_PORT\n";
         std::cout << "The fourth line has  Switch Port\n";
         std::cout << "The last line has Expected Retransmission Overhead Percentage(0-100)\n";
-        printf("\nUsage $:- ./build/sw_exe ./config.txt\n");
-        exit(1);
+		printf("\nUsage To Enable Verbose Logging to file$	LOG_ON_FILE=1 ./build/sw_exe <config.txt> V\n");
+		printf("Usage To Enable Verbose Logging to Terminal$	./build/sw_exe <config.txt> V\n");
+		printf("Usage To Min Logging to Terminal$	./build/sw_exe <config.txt>\n");
+		exit(1);
 	}
-
+    if(argc ==3){// checking for verbose logging
+		if(std::string(argv[2])== "V"){
+			LOG_Verbose = true;
+		}
+	}
+	else if(argc == 2){
+		LOG_Verbose = false;
+	}
 	//init global data-structures
 	load_configuration(argv[1]);
 
@@ -55,7 +65,7 @@ int main(int argc, char **argv){
 	check_err(status,"Error in binding");
 
 	//optional messages
-	printf("\nSetup Finished Sarting 2 threads ...\n\n");
+	LOG_TO(LogDestination::TERMINAL_ONLY,"Setup Finished Sarting 2 threads ...\n\n");
 
     //////////// Setting Up TCP socket ..........
     struct sockaddr_in address;
@@ -182,5 +192,5 @@ void load_configuration(const std::string& fileName) {
     file.close();
 
     //debug
-    std::cout << "ERO = "<<ero<<" p = "<<packet_drop_prob<<" threshold = "<<threshold<<"\n";
+    LOG_TO(LogDestination::TERMINAL_ONLY, "ERO = ",ero," p = ",packet_drop_prob," threshold = ",threshold,"\n");
 }
