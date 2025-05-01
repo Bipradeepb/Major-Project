@@ -30,7 +30,7 @@ std::pair<unsigned char*,size_t> readFileBlock(const std::string& fileName, int 
 
     if (currentPos >= fileSize) {
         //std::cerr<<"currentPos = "<<currentPos<<" file Size = "<<fileSize<<"\n";
-        //std::cerr << "Attempted to read beyond the end of file." << std::endl;
+        LOG("Note: Attempted to read beyond the end of file => blk = ",block_num-1," Earlier Sent is the last data packet\n");
         //std::cerr << "fileName = "<<fileName <<" block_num = "<<block_num<<" mode = "<<mode<<std::endl;
         fclose(file);
         return {nullptr,0};
@@ -45,9 +45,9 @@ std::pair<unsigned char*,size_t> readFileBlock(const std::string& fileName, int 
 
     // Read 512 bytes into buffer
     size_t bytesRead = fread(buffer, sizeof(unsigned char), 512, file);
-    // if (bytesRead != 512) {
-    //     LOG_TO(LogDestination::TERMINAL_ONLY,"Note: Could not read full 512 bytes, read " , bytesRead , " bytes.\n");
-    // }
+    if (bytesRead != 512) {
+        LOG("Note: Read from file " ,bytesRead ," Bytes (<512 B) => curr blk = ",block_num," is the last data packet\n");
+    }
 
     // Close the file
     fclose(file);

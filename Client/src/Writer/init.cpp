@@ -31,8 +31,8 @@ void clientAsWriter(const Config& config){
         //setup for timeout
         FD_ZERO(&readfds);
         FD_SET(sockfd, &readfds);
-        timeout.tv_sec = TIMEOUT_SEC;
-        timeout.tv_usec = 0;
+        timeout.tv_sec = TIMEOUT_MILLI_SEC/1000;
+        timeout.tv_usec = (TIMEOUT_MILLI_SEC % 1000)*1000;
 
         int activity = select(sockfd + 1, &readfds, nullptr, nullptr, &timeout);
         if(activity < 0){
@@ -61,4 +61,9 @@ void clientAsWriter(const Config& config){
 
     readThreadInstance.join();
     forwardThreadInstance.join();
+
+    LOG_TO(LogDestination::TERMINAL_ONLY,"File Transfer Complete \n");
+    LOG_TO(LogDestination::FILE_ONLY,"File Transfer Complete \n");
+    close(sockfd);
+
 }

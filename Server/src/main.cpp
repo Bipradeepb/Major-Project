@@ -52,6 +52,7 @@ int main(int argc, char **argv){
         std::cout << "The first Line has Server Port\n";
         std::cout << "The second Line has Switch Ip\n";
         std::cout << "The third Line has Switch Port\n";
+		std::cout << "The fourth Line has Timeout in ms\n";
 		printf("\nUsage To Enable Verbose Logging to file$	LOG_ON_FILE=1 ./build/ser_exe <config.txt> V\n");
 		printf("Usage To Enable Verbose Logging to Terminal$	./build/ser_exe <config.txt> V\n");
 		printf("Usage To Min Logging to Terminal$	./build/ser_exe <config.txt>\n");
@@ -135,6 +136,11 @@ while(1){
 		LOG_TO(LogDestination::BOTH,"Waiting For RD/WR of Client\n");
 		ssize_t recv_len = recvfrom(sockfd, buffer, BUFFER_SIZE, 0, (struct sockaddr*)&clientaddr, &addr_len);
 		check_err(recv_len,"RD/WR recv failed");
+
+		if(buffer[1]!=1 and buffer[1]!=2){
+			std::cerr << "Bad packet Recv \n";
+			return 1;//Quitting
+		}
 
 		// Extract RRQ/WRQ data
 		RRQ_WRQ_Packet pkt = extract_rrq_wrq_packet(buffer);
@@ -262,6 +268,14 @@ bool readConfigFromFile(const std::string& filename, Config& config) {
         config.switch_port = std::stoi(line);
     } else {
         std::cerr << "Error reading switch port." << std::endl;
+        return false;
+    }
+
+	//Read Timeout
+    if (std::getline(file, line)) {
+        TIMEOUT_MILLI_SEC = std::stoi(line);
+    } else {
+        std::cerr << "Error reading Timeout(ms)." << std::endl;
         return false;
     }
 

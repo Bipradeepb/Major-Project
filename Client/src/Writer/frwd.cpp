@@ -28,7 +28,7 @@ std::pair<unsigned char*,size_t> readFileBlock(const std::string& fileName, int 
 
     if (currentPos >= fileSize) {
         //std::cerr<<"currentPos = "<<currentPos<<" file Size = "<<fileSize<<"\n";
-        LOG("Attempted to read beyond the end of file.\n");
+        LOG("Note: Attempted to read beyond the end of file => blk = ",block_num-1," Earlier Sent is the last data packet\n");
         //LOG("fileName = "<<fileName <<" block_num = "<<block_num<<" mode = "<<mode<<std::endl;
         fclose(file);
         return {nullptr,0};
@@ -44,7 +44,7 @@ std::pair<unsigned char*,size_t> readFileBlock(const std::string& fileName, int 
     // Read 512 bytes into buffer
     size_t bytesRead = fread(buffer, sizeof(unsigned char), 512, file);
     if (bytesRead != 512) {
-        LOG("Note: Could not read full 512 bytes, read " ,bytesRead ," bytes.\n");
+        LOG("Note: Read from file " ,bytesRead ," Bytes (<512 B) => curr blk = ",block_num," is the last data packet\n");
     }
 
     // Close the file
@@ -70,27 +70,43 @@ void forwardThread(int sockfd, const Config* ctx){
     Windowloop:
         mtx.lock();
         auto blk = readFileBlock(ctx->filePath, current_blk , "octet");
-        if(blk.second ==0){// Out of Bound File Access
-            LOG_TO(LogDestination::TERMINAL_ONLY,"File Transfer Complete \n");
+        mtx.unlock();
+
+        if(blk.second ==0){// Out of Bound File Access[current blk =last data blk +1]
+            loop:
+            mtx.lock();
+            if(flag_Ack_Recv == true){//set from read thread inside ACK recv blk
+                if(read_thread_end == true){
+                    mtx.unlock();
+                    break;
+                }
+                else{
+                    flag_Ack_Recv = false;
+                    mtx.unlock();
+                    continue;
+                }
+            }
             mtx.unlock();
-            break;
+            goto loop;// waiting for ack
         }
+
+        mtx.lock();
         LOG("Building Data Packet for blk = ",current_blk,"\n");
         u_char * packet = build_data_packet(current_blk,blk.first,blk.second);
         sendto(sockfd, packet, blk.second + 4, 0, (struct sockaddr*)&clientAddr, sizeof(clientAddr));
+        if(blk.second <512){
+            last_D_blk = current_blk;
+        }
         current_blk ++;
 
         //free resource
         free(packet);
         delete [] (blk.first);
 
-        if(current_blk <= limit){
-            // mtx.unlock();
-            // std::this_thread::sleep_for(std::chrono::milliseconds(50)); // In the meanTime Wait if RecvThread Timeouts or Recv New ACK
+        if(current_blk <= limit){ //within current window
 
-            // mtx.lock();
             if(flag_Ack_Recv){
-                LOG("Updated [After recv ACK ]current_blk = ",current_blk,"\n");
+                LOG("Midway of send Window Updated current_blk = ",current_blk,"due to ACK\n");
                 flag_Ack_Recv = false;
                 limit = current_blk + ctx->serverWindowSize -1; // New Limit [current_blk is updated in ReadThread]
             }
@@ -105,7 +121,6 @@ void forwardThread(int sockfd, const Config* ctx){
         mtx.lock();
         if(flag_Ack_Recv != true){
             mtx.unlock();
-            //std::this_thread::sleep_for(std::chrono::milliseconds(50));
             goto ack_loop;
         }
         flag_Ack_Recv = false;
@@ -114,7 +129,5 @@ void forwardThread(int sockfd, const Config* ctx){
     }// Loop Back to transmit Next Window
 
     // Reach Here ==> Full File Transfer Complete
-    LOG_TO(LogDestination::TERMINAL_ONLY,"Closing Socket and Exiting\n");
-    close(sockfd);
-    exit(0);//terminate program
+
 }

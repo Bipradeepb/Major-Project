@@ -19,30 +19,33 @@
 
 ## HOW to Run All the modules(Switch Server Client) with Min Logging to Terminal->
 
-1. cd /opt/gobackn
-2. As per this repo's example setup Follow the below order(top 2 bottom) strictly
+---> cd /opt/gobackn <br>
+
+   As per this repo's example setup Follow the below order(top 2 bottom) strictly
         1st Terminal cd inside Switch run>  ./build/runSwitch  ./config.txt
-        2nd Terminal cd inside Server run>  ./build/runServer ./config.txt
-        3rd Terminal cd inside Server run>  ./build/runServer ./config.txt
+        2nd Terminal cd inside Server run>  ./build/runServer ./config_a.txt
+        3rd Terminal cd inside Server run>  ./build/runServer ./config_b.txt
         4th Terminal cd inside Client run>  ./build/runCLI ./config.txt # for Cli or,
         4th Terminal cd inside Client run>  ./build/runGUI # for Gui
 
 ## How to Run All the modules(Switch Server Client) with Verbose Logging to File ->
 
-1. cd /opt/gobackn
-2. As per this repo's example setup Follow the below order(top 2 bottom) strictly
+---> cd /opt/gobackn <br>
+
+   As per this repo's example setup Follow the below order(top 2 bottom) strictly
         1st Terminal cd inside Switch run>  LOG_ON_FILE=1 ./build/runSwitch  ./config.txt V
-        2nd Terminal cd inside Server run>  LOG_ON_FILE=1 ./build/runServer ./config.txt V
-        3rd Terminal cd inside Server run>  LOG_ON_FILE=1 ./build/runServer ./config.txt V
+        2nd Terminal cd inside Server run>  LOG_ON_FILE=1 ./build/runServer ./config_a.txt V
+        3rd Terminal cd inside Server run>  LOG_ON_FILE=1 ./build/runServer ./config_b.txt V
         4th Terminal cd inside Client run>  LOG_ON_FILE=1 ./build/runCLI ./config.txt V # for Cli or,
         4th Terminal cd inside Client run>  LOG_ON_FILE=1 ./build/runGUI V # for Gui
 
 ## How to Run All the modules(Switch Server Client) with Verbose Logging to Terminal ->
 
-1. cd /opt/gobackn
-2. As per this repo's example setup Follow the below order(top 2 bottom) strictly
+---> cd /opt/gobackn <br>
+
+   As per this repo's example setup Follow the below order(top 2 bottom) strictly
         1st Terminal cd inside Switch run>  ./build/runSwitch  ./config.txt V
-        2nd Terminal cd inside Server run>  ./build/runServer ./config.txt V
-        3rd Terminal cd inside Server run>  ./build/runServer ./config.txt V
+        2nd Terminal cd inside Server run>  ./build/runServer ./config_a.txt V
+        3rd Terminal cd inside Server run>  ./build/runServer ./config_b.txt V
         4th Terminal cd inside Client run>  ./build/runCLI ./config.txt V # for Cli or,
         4th Terminal cd inside Client run>  ./build/runGUI V # for Gui

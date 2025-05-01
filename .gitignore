@@ -1,6 +1,8 @@
 */Demo/
 */build/
 */config.txt
+*/config_a.txt
+*/config_b.txt
 **/core
 */Logs
 ClientUI/CMakeLists.txt.user

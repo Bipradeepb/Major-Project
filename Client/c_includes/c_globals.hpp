@@ -39,7 +39,9 @@ inline void check_err(int fd,std::string mssg){
 	}
 }
 
-#define TIMEOUT_SEC 2
-inline std::mutex mtx;
+inline int TIMEOUT_MILLI_SEC=100;
+inline std::mutex mtx; //supports the below variables
 inline  bool flag_Ack_Recv = false;
+inline  bool read_thread_end = false;
+inline  int last_D_blk{INT_MAX}; // used in Writer to signal Read and Write thread
 inline  int current_blk = 0;

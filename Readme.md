@@ -42,8 +42,8 @@ Backup picks up file transfer from where active left using shared context <br>
 
     As per this repo's example setup Follow the below order(top 2 bottom) strictly
         1st Terminal cd inside Switch run>  ./build/sw_exe  ./config.txt
-        2nd Terminal cd inside Server run>  ./build/ser_exe ./config.txt
-        3rd Terminal cd inside Server run>  ./build/ser_exe ./config.txt
+        2nd Terminal cd inside Server run>  ./build/ser_exe ./config_a.txt
+        3rd Terminal cd inside Server run>  ./build/ser_exe ./config_b.txt
         4th Terminal cd inside Client run>  ./build/cli_exe ./config.txt # for Cli or,
         4th Terminal cd inside Client run>  ./build/ClientUI # for Gui
 
@@ -51,8 +51,8 @@ Backup picks up file transfer from where active left using shared context <br>
 
     As per this repo's example setup Follow the below order(top 2 bottom) strictly
         1st Terminal cd inside Switch run>  LOG_ON_FILE=1 ./build/sw_exe  ./config.txt V
-        2nd Terminal cd inside Server run>  LOG_ON_FILE=1 ./build/ser_exe ./config.txt V
-        3rd Terminal cd inside Server run>  LOG_ON_FILE=1 ./build/ser_exe ./config.txt V
+        2nd Terminal cd inside Server run>  LOG_ON_FILE=1 ./build/ser_exe ./config_a.txt V
+        3rd Terminal cd inside Server run>  LOG_ON_FILE=1 ./build/ser_exe ./config_b.txt V
         4th Terminal cd inside Client run>  LOG_ON_FILE=1 ./build/cli_exe ./config.txt V # for Cli or,
         4th Terminal cd inside Client run>  LOG_ON_FILE=1 ./build/ClientUI V # for Gui
 
@@ -60,8 +60,8 @@ Backup picks up file transfer from where active left using shared context <br>
 
     As per this repo's example setup Follow the below order(top 2 bottom) strictly
         1st Terminal cd inside Switch run>  ./build/sw_exe  ./config.txt V
-        2nd Terminal cd inside Server run>  ./build/ser_exe ./config.txt V
-        3rd Terminal cd inside Server run>  ./build/ser_exe ./config.txt V
+        2nd Terminal cd inside Server run>  ./build/ser_exe ./config_a.txt V
+        3rd Terminal cd inside Server run>  ./build/ser_exe ./config_b.txt V
         4th Terminal cd inside Client run>  ./build/cli_exe ./config.txt V # for Cli or,
         4th Terminal cd inside Client run>  ./build/ClientUI V # for Gui
 

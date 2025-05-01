@@ -17,7 +17,7 @@ void frwd_thread(int sockfd){
         }
 
         //debug lines
-        LOG("Inside Frwd Thread After Extract Job\n");
+        //LOG("Inside Frwd Thread After Extract Job\n");
         thejob->display_job();
 
         // Parse the IP and port from the client key
@@ -35,7 +35,7 @@ void frwd_thread(int sockfd){
         ssize_t sent_bytes = sendto(sockfd, thejob->packet, thejob->packet_size, 0, (const struct sockaddr*)&client_addr, sizeof(client_addr));
         check_err(sent_bytes,"sendto failed");
         free(thejob->packet);
-        LOG("Packet Sent to ",thejob->destn,"\n");
+        //LOG("Packet Sent to ",thejob->destn,"\n");
 
         //WatchDog - HeartBeat Check
         bool switchFlag = false;
@@ -49,7 +49,7 @@ void frwd_thread(int sockfd){
             if((watchDogCnt) > threshold){
                 switchFlag = true;
                 watchDogCnt =0; // once switch reset counter for new server
-                LOG_TO(LogDestination::TERMINAL_ONLY,"SWITCHING  START\n");
+                LOG_TO(LogDestination::BOTH,"SWITCHING  START\n");
             }
             mtx_wd.unlock();
 

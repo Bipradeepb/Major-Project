@@ -77,7 +77,7 @@ void reader_thread(int sockfd){
                 std::lock_guard<std::mutex> lock2(mtx_WorkQ);
                 WorkQ.push_back(thejob);
             }
-            LOG("Mssg recv from Active server | Job created and Push to WorkQ\n");
+            //LOG("Mssg recv from Active server | Job created and Push to WorkQ\n");
 
         }
         else if(sender_key != curr_backup){// recv mssg is from client
@@ -112,7 +112,7 @@ void reader_thread(int sockfd){
                 std::lock_guard<std::mutex> lock2(mtx_WorkQ);
                 WorkQ.push_back(thejob);
             }
-            LOG("Mssg recv from client | Job created and Push to WorkQ\n");
+            //LOG("Mssg recv from client | Job created and Push to WorkQ\n");
         }
 
         cv_work.notify_one(); // notifies the frwd thread that WorQ has data

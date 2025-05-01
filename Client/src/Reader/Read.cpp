@@ -35,10 +35,13 @@ void clientAsReader(const Config& config) {
     socklen_t recvAddrLen = sizeof(recvAddr);
 
     //init var
-    int curr_Win = config.serverWindowSize, expect_blk_num = 0;
+    int curr_Win = config.serverWindowSize, expect_blk_num = 0 , last_sent_ack=-1;
     unsigned char buffer[BUFFER_SIZE];
     fd_set readfds; // for async Read[Non Block IO]
     struct timeval timeout;
+    //for not sending too many acks on recv wrong data pack
+    std::chrono::_V2::steady_clock::time_point last_send_time = std::chrono::steady_clock::now();
+    std::chrono::_V2::steady_clock::time_point current_time = std::chrono::steady_clock::now();
 
     // Send RD packet and Wait For Data Packet[blk =0] As Reply
     unsigned char* rrq_packet = build_rrq_wrq_packet(config.filePath.c_str(), config.serverWindowSize, 1);
@@ -49,8 +52,8 @@ void clientAsReader(const Config& config) {
         //setup for timeout
         FD_ZERO(&readfds);
         FD_SET(sockfd, &readfds);
-        timeout.tv_sec = TIMEOUT_SEC;
-        timeout.tv_usec = 0;
+        timeout.tv_sec = TIMEOUT_MILLI_SEC/1000;
+        timeout.tv_usec = (TIMEOUT_MILLI_SEC % 1000)*1000;
 
         int activity = select(sockfd + 1, &readfds, nullptr, nullptr, &timeout);
         if(activity < 0){
@@ -68,16 +71,16 @@ void clientAsReader(const Config& config) {
     }// end of inf loop
 
     free(rrq_packet);
-    bool flag = true; // Denotes 1st Packet recv after send RD packet
+    bool firstDataPkt = true; // Denotes 1st Packet recv after send RD packet
 
     // Handle when Recv Data Packets
     while (true) {
 
-        if(flag == false){ // check For Timeouts of recv Data Packets
+        if(firstDataPkt == false){ // check For Timeouts of recv Data Packets
             FD_ZERO(&readfds);
             FD_SET(sockfd, &readfds);
-            timeout.tv_sec = TIMEOUT_SEC;
-            timeout.tv_usec = 0;
+            timeout.tv_sec = TIMEOUT_MILLI_SEC/1000;
+            timeout.tv_usec = (TIMEOUT_MILLI_SEC % 1000)*1000;
 
             int activity = select(sockfd + 1, &readfds, nullptr, nullptr, &timeout);
             if(activity < 0){
@@ -97,7 +100,7 @@ void clientAsReader(const Config& config) {
 
         bzero(buffer,BUFFER_SIZE);
         ssize_t recv_len = recvfrom(sockfd, buffer, BUFFER_SIZE, 0, (struct sockaddr*)&recvAddr, &recvAddrLen);
-        flag = false;
+        firstDataPkt = false;
 
         if (buffer[1] == 3) { // Data packet
             DATA_Packet data_pkt = extract_data_packet(buffer, recv_len);
@@ -118,19 +121,32 @@ void clientAsReader(const Config& config) {
 
             }
             else{//data_pkt.block_number > expect_blk_num  or data_pkt.block_number < expect_blk_num
-                LOG("Sending ACK with blk = ",expect_blk_num,"\n");
-                unsigned char* ack_packet = build_ack_packet(expect_blk_num);
-                sendto(sockfd, ack_packet, 4, 0, (struct sockaddr*)&serverAddr, sizeof(serverAddr));
-                free(ack_packet);
-                curr_Win = config.serverWindowSize;
+                //prevents sending too many same ACKS
+                current_time = std::chrono::steady_clock::now();
+                if((last_sent_ack != expect_blk_num) or(std::chrono::duration_cast<std::chrono::milliseconds>(current_time - last_send_time).count()>=TIMEOUT_MILLI_SEC)){
+                    LOG("Sending ACK with blk = ",expect_blk_num,"\n");
+                    unsigned char* ack_packet = build_ack_packet(expect_blk_num);
+                    sendto(sockfd, ack_packet, 4, 0, (struct sockaddr*)&serverAddr, sizeof(serverAddr));
+                    free(ack_packet);
+                    curr_Win = config.serverWindowSize;
+                    last_send_time = current_time;
+                    last_sent_ack = expect_blk_num;
+                }
+                else{
+                    LOG("Just Sent a ACK few ms ago \n");
+                }
+                free(data_pkt.data);
+                continue;
             }
 
-            if(curr_Win == 0){
+            if((curr_Win == 0) and !(data_pkt.data_size < 512)){
                 LOG("Full Win Recv :- Sending ACK with blk = ",expect_blk_num,"\n");
                 unsigned char* ack_packet = build_ack_packet(expect_blk_num);
                 sendto(sockfd, ack_packet, 4, 0, (struct sockaddr*)&serverAddr, sizeof(serverAddr));
                 free(ack_packet);
                 curr_Win = config.serverWindowSize;
+                free(data_pkt.data);
+                continue;
             }
 
             free(data_pkt.data);
@@ -142,7 +158,7 @@ void clientAsReader(const Config& config) {
     //Handle Last Packet Recv:-
      while (true) {
         //Send Final ACK
-        LOG("Sending FInal ACK with blk = ",expect_blk_num,"\n");
+        LOG("Sending Final ACK with blk = ",expect_blk_num,"\n");
         unsigned char* ack_packet = build_ack_packet(expect_blk_num);
         sendto(sockfd, ack_packet, 4, 0, (struct sockaddr*)&serverAddr, sizeof(serverAddr));
         free(ack_packet);
@@ -150,8 +166,8 @@ void clientAsReader(const Config& config) {
         //setup for timeout
         FD_ZERO(&readfds);
         FD_SET(sockfd, &readfds);
-        timeout.tv_sec = TIMEOUT_SEC;
-        timeout.tv_usec = 0;
+        timeout.tv_sec = TIMEOUT_MILLI_SEC/1000;
+        timeout.tv_usec = (TIMEOUT_MILLI_SEC % 1000)*1000;
 
         int activity = select(sockfd + 1, &readfds, nullptr, nullptr, &timeout);
 
@@ -165,6 +181,7 @@ void clientAsReader(const Config& config) {
         }
     }
 
-    LOG_TO(LogDestination::TERMINAL_ONLY, "Received Full File \n");
+    LOG_TO(LogDestination::TERMINAL_ONLY, "File Transfer Complete \n");
+    LOG_TO(LogDestination::FILE_ONLY, "File Transfer Complete \n");
     close(sockfd);
 }
