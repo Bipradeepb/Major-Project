@@ -72,22 +72,34 @@ void forwardThread(int sockfd, Context* ctx) {
     Windowloop:
         mtx.lock();
         auto blk = readFileBlock(ctx->fileName, ctx->current_blk , "octet");
-        if(blk.second ==0){// Out of Bound File Access
-            //LOG_TO(LogDestination::BOTH,"File Transfer Complete \n");
+        mtx.unlock();
+
+        if(blk.second ==0){// Out of Bound File Access[current blk =last data blk +1]
+            loop:
+            mtx.lock();
+            if(flag_Ack_Recv == true){//set from read thread inside ACK recv blk
+                if(read_thread_end == true){
+                    mtx.unlock();
+                    break;
+                }
+                else{
+                    flag_Ack_Recv = false;
+                    mtx.unlock();
+                    continue;
+                }
+            }
             mtx.unlock();
-            break;
+            goto loop;// waiting for ack
         }
+
+        mtx.lock();
         LOG("Building Data Packet for blk = ",ctx->current_blk,"\n");
         u_char * packet = build_data_packet(ctx->current_blk,blk.first,blk.second);
         sendto(sockfd, packet, blk.second + 4, 0, (struct sockaddr*)&clientAddr, sizeof(clientAddr));
+        if(blk.second <512){
+            last_D_blk = ctx->current_blk;
+        }
         ctx->current_blk ++;
-
-        // //debug
-        // LOG("Data packet sent (read from file)\n")
-        // for (int i =0;i<blk.second + 4;++i) {
-        //     std::cout<<(uint)packet[i]<<" ";
-        // }
-        // LOG("\n");
 
         //free resource
         free(packet);
@@ -95,7 +107,7 @@ void forwardThread(int sockfd, Context* ctx) {
 
         if(ctx->current_blk <= limit){
             if(flag_Ack_Recv){
-                LOG("Updated [After recv ACK ]current_blk = ",ctx->current_blk,"\n");
+                LOG("Midway of send Window Updated current_blk = ",ctx->current_blk,"due to ACK\n");
                 flag_Ack_Recv = false;
                 limit = ctx->current_blk + ctx->WindowSize -1; // New Limit [current_blk is updated in ReadThread]
             }
@@ -118,5 +130,5 @@ void forwardThread(int sockfd, Context* ctx) {
     }// Loop Back to transmit Next Window
 
     // Reach Here ==> Full File Transfer Complete
-    stop_flag = true; // signal Read thread to also stop
+
 }

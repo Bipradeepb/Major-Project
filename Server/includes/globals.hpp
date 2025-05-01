@@ -43,6 +43,7 @@ inline void check_err(int fd,std::string mssg){
 }
 
 inline int TIMEOUT_MILLI_SEC{100};
-inline std::mutex mtx;  // Mutex for synchronizing access to current_blk
+inline std::mutex mtx;  // Mutex for synchronizing below variables
 inline bool flag_Ack_Recv = false;// used in Writer to signal Read and Write thread
-inline std::atomic<bool> stop_flag{false}; // used in Writer to signal Read and Write thread
+inline  bool read_thread_end = false;
+inline  int last_D_blk{INT_MAX}; // used in Writer to signal Read and Write thread
