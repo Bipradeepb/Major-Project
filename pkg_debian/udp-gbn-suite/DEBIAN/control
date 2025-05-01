@@ -1,0 +1,10 @@
+Package: udp-gbn-suite
+Version: 1.0.0-1
+Architecture: amd64
+Maintainer: pb-dot
+Description: Highly Avaiable File Transfer Suite
+ A suite of tools for file transfer using  UDP + go-back-n protocol.
+ Includes a Server, a CLI Client, a GUI Client, and a Switch.
+ .
+ This package bundles necessary dependencies inside lib folder.
+Provides: udp-gbn-suite

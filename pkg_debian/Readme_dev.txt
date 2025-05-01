@@ -1,35 +1,37 @@
 This is a documentation on Building the Deb pkg
 
+--> Dont forget to do this before 1st time building the deb package
+prtihijit@hp-250-g6:~/Desktop/go-back-n/pkg_debian/$
+chmod 775 udp-gbn-suite/DEBIAN/ ;
+chmod 777 udp-gbn-suite/opt/*
+
+dpkg detects these perm and keep it
+--------------------------------------------------------------------
+
 **
     if u have a new sw_exe , ser_exe , cli_exe or ClientUI
     1. ldd *_exe > ldd_output_file
     2. helper_scripts/copy_lib.sh ldd_output_file
-    3. helper_scripts/rebuild.sh
+    3. helper_scripts/rebuild.sh   #copies the new exe in deb pkg folders and build .deb file
 **
 
 **
     building the pkg (inside pkg_debian folder):-
-        dpkg-deb --build udp-ft-suite
+        dpkg-deb --build udp-gbn-suite
 **
 
 **
     installing the pkg (inside pkg_debian folder):-
-        sudo apt install ./udp-ft-suite.deb
+        sudo apt install ./udp-gbn-suite.deb
 **
 
 **
     Removing the pkg (from anywhere):-
-        sudo apt purge udp-ft-suite
+        sudo apt purge udp-gbn-suite
 **
 
 ____________________________________________________________________
---> Dont forget to do this before 1st time building the deb package
-prtihijit@hp-250-g6:~/Desktop/go-back-n/pkg_debian/udp-ft-suite$
-chmod 777 opt/gobackn/*
-chmod +x DEBIAN/postrm
-chmod +x DEBIAN/postinst
 
-dpkg detects these perm and keep it
 *****************************************************************************
 Story behind :-
 the opt/gobackn/lib folder conatains the .so files & linker used by my exe

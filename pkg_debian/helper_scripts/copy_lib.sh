@@ -14,7 +14,7 @@
 # are skipped.
 
 # Target directory where all the .so files will be copied.
-TARGET_DIR="/home/prtihijit/Desktop/go-back-n/pkg_debian/udp-ft-suite/opt/gobackn/lib"
+TARGET_DIR="/home/prtihijit/Desktop/Major-Project/go-back-n/pkg_debian/udp-gbn-suite/opt/gobackn/lib"
 
 # Create the target directory if it doesn't exist.
 mkdir -p "$TARGET_DIR" || { echo "Error: Could not create target directory $TARGET_DIR"; exit 1; }

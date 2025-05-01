@@ -1,0 +1,32 @@
+#!/bin/bash
+set -e
+
+# Find the directory where this script resides
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+BASE_DIR="$(dirname "$(dirname "$SCRIPT_DIR")")"
+
+# Paths
+LIB_DIR="${BASE_DIR}/lib"
+REAL_EXE="${SCRIPT_DIR}/ClientUI"
+LINKER="${LIB_DIR}/ld-linux-x86-64.so.2"
+
+# Qt-specific plugin directories
+export QT_PLUGIN_PATH="${LIB_DIR}/plugins"
+export QT_QPA_PLATFORM_PLUGIN_PATH="${LIB_DIR}/plugins/platforms"
+
+# Safely prepend our lib path
+export LD_LIBRARY_PATH="${LIB_DIR}${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+
+# Validate existence
+if [[ ! -x "$REAL_EXE" ]]; then
+    echo "❌ Executable not found: $REAL_EXE" >&2
+    exit 1
+fi
+
+if [[ ! -x "$LINKER" ]]; then
+    echo "❌ Linker not found: $LINKER" >&2
+    exit 1
+fi
+
+# Execute with our own dynamic linker to isolate from host glibc
+exec "$LINKER" --library-path "$LIB_DIR" "$REAL_EXE" "$@"

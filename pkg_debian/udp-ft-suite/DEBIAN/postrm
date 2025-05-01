@@ -1,5 +1,0 @@
-#!/bin/bash
-set -e
-
-rm -rf /opt/gobackn
-echo "udp-ft-suite removed Successfully. It will Miss u :)"
